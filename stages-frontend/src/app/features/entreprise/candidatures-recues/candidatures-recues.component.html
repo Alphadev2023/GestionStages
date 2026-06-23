@@ -1,0 +1,78 @@
+<app-sidebar />
+<div class="ml-64 min-h-screen bg-gray-50">
+  <app-navbar title="Candidatures recues" />
+  <main class="p-6">
+
+    <!-- Selection offre -->
+    <div class="card mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Selectionner une offre</label>
+      <select [(ngModel)]="selectedOffreId" (ngModelChange)="chargerCandidatures()"
+        class="input-field w-full md:w-96">
+        <option [ngValue]="null">-- Choisir une offre --</option>
+        @for (o of offres(); track o.id) {
+          <option [ngValue]="o.id">{{ o.titre }}</option>
+        }
+      </select>
+    </div>
+
+    @if (selectedOffreId && candidatures().length > 0) {
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="card text-center py-3 border-l-4 border-warning-500">
+          <p class="text-2xl font-bold text-warning-600">{{ enAttente() }}</p>
+          <p class="text-xs text-gray-500 mt-1">En attente</p>
+        </div>
+        <div class="card text-center py-3 border-l-4 border-success-500">
+          <p class="text-2xl font-bold text-success-600">{{ acceptees() }}</p>
+          <p class="text-xs text-gray-500 mt-1">Acceptees</p>
+        </div>
+        <div class="card text-center py-3 border-l-4 border-danger-500">
+          <p class="text-2xl font-bold text-danger-600">{{ refusees() }}</p>
+          <p class="text-xs text-gray-500 mt-1">Refusees</p>
+        </div>
+      </div>
+    }
+
+    @if (selectedOffreId) {
+      <div class="grid gap-4">
+        @for (c of candidatures(); track c.id) {
+          <div class="card hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                    {{ c.nomEtudiant.charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900">{{ c.nomEtudiant }}</p>
+                    <p class="text-xs text-gray-400">Postule le {{ c.createdAt.slice(0, 10) }}</p>
+                  </div>
+                  <span [class]="badgeClass(c.statut)">{{ statutLabel(c.statut) }}</span>
+                </div>
+                @if (c.lettreMotivation) {
+                  <div class="ml-12 p-3 bg-gray-50 rounded-lg mt-2">
+                    <p class="text-xs font-medium text-gray-500 mb-1">Lettre de motivation :</p>
+                    <p class="text-sm text-gray-700 line-clamp-3">{{ c.lettreMotivation }}</p>
+                  </div>
+                }
+              </div>
+              <div class="flex flex-col items-end gap-2 ml-4 shrink-0">
+                <a [href]="c.cvUrl" target="_blank"
+                  class="text-xs text-primary-600 hover:underline border border-primary-200 px-3 py-1.5 rounded-lg">
+                  Voir CV
+                </a>
+                @if (c.statut === "EN_ATTENTE") {
+                  <button (click)="traiter(c.id, acceptee)" [class]="btnAccepter">Accepter</button>
+                  <button (click)="traiter(c.id, refusee)" [class]="btnRefuser">Refuser</button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+        @empty {
+          <div class="card text-center py-12 text-gray-400">Aucune candidature pour cette offre</div>
+        }
+      </div>
+    }
+  </main>
+</div>

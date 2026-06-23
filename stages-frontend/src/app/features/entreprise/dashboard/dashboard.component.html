@@ -1,0 +1,85 @@
+<app-sidebar />
+<div class="ml-64 min-h-screen bg-gray-50">
+  <app-navbar title="Tableau de bord" />
+  <main class="p-6">
+
+    <!-- Banniere entreprise -->
+    <div class="card mb-6 bg-gradient-to-r from-green-700 to-green-500 text-white border-0">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold mb-1">{{ auth.user()?.nomEntreprise ?? auth.user()?.nom }}</h2>
+          <p class="text-green-100 text-sm">{{ auth.user()?.secteurActivite ?? "Entreprise" }}</p>
+          <p class="text-green-200 text-xs mt-1">{{ auth.user()?.email }}</p>
+        </div>
+        <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
+          {{ initiales() }}
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 gap-6 mb-6">
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm font-medium text-gray-500">Offres publiees</p>
+          <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+            <span class="text-primary-600 text-xs font-bold">OF</span>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-primary-600">{{ totalOffres() }}</p>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-xs text-success-600 font-medium">{{ offresActives() }} active(s)</span>
+          <span class="text-xs text-gray-400">sur {{ totalOffres() }} total</span>
+        </div>
+        <div class="h-1.5 bg-gray-100 rounded-full mt-3 overflow-hidden">
+          <div class="h-full rounded-full" style="background-color:#16a34a; width:100%"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm font-medium text-gray-500">Candidatures recues</p>
+          <div class="w-8 h-8 bg-warning-100 rounded-lg flex items-center justify-center">
+            <span class="text-warning-600 text-xs font-bold">CA</span>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-warning-600">{{ totalCandidatures() }}</p>
+        <p class="text-xs text-gray-400 mt-2">Consultez les candidatures par offre</p>
+      </div>
+    </div>
+
+    <!-- Acces rapides -->
+    <div class="grid grid-cols-2 gap-4">
+      <a routerLink="/entreprise/offres"
+        class="card flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-primary-500">
+        <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
+          <span class="text-primary-600 font-bold text-sm">OF</span>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-900">Gerer mes offres</p>
+          <p class="text-xs text-gray-500">Publier et gerer vos offres de stage</p>
+        </div>
+      </a>
+      <a routerLink="/entreprise/candidatures"
+        class="card flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-warning-500">
+        <div class="w-10 h-10 bg-warning-100 rounded-xl flex items-center justify-center shrink-0">
+          <span class="text-warning-600 font-bold text-sm">CA</span>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-900">Candidatures recues</p>
+          <p class="text-xs text-gray-500">Accepter ou refuser les candidats</p>
+        </div>
+      </a>
+      <a routerLink="/messagerie"
+        class="card flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-blue-500">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
+          <span class="text-blue-600 font-bold text-sm">MS</span>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-900">Messagerie</p>
+          <p class="text-xs text-gray-500">Echanger avec les etudiants</p>
+        </div>
+      </a>
+    </div>
+  </main>
+</div>

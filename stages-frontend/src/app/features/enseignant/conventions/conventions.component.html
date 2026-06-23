@@ -1,0 +1,102 @@
+<app-sidebar />
+<div class="ml-64 min-h-screen bg-gray-50">
+  <app-navbar title="Conventions de stage" />
+  <main class="p-6">
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="card text-center py-4 border-l-4 border-warning-500">
+        <p class="text-2xl font-bold text-warning-600">{{ enAttente() }}</p>
+        <p class="text-xs text-gray-500 mt-1">En attente</p>
+      </div>
+      <div class="card text-center py-4 border-l-4 border-success-500">
+        <p class="text-2xl font-bold text-success-600">{{ validees() }}</p>
+        <p class="text-xs text-gray-500 mt-1">Validees</p>
+      </div>
+      <div class="card text-center py-4 border-l-4 border-danger-500">
+        <p class="text-2xl font-bold text-danger-600">{{ rejetees() }}</p>
+        <p class="text-xs text-gray-500 mt-1">Rejetees</p>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-6 flex gap-3">
+      @for (s of statuts; track s.label) {
+        <button (click)="setFiltre(s.value)"
+          [class]="filtreStatut === s.value ? buttonActif : buttonInactif">
+          {{ s.label }}
+        </button>
+      }
+    </div>
+
+    <!-- Liste conventions -->
+    <div class="grid gap-4">
+      @for (conv of conventions(); track conv.id) {
+        <div class="card hover:shadow-md transition-shadow">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+
+              <!-- En-tete etudiant -->
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                  {{ conv.nomEtudiant.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900">{{ conv.nomEtudiant }}</p>
+                  <p class="text-xs text-gray-500">{{ conv.titreOffre }}</p>
+                </div>
+                <span [class]="badgeClass(conv.statut)">{{ statutLabel(conv.statut) }}</span>
+              </div>
+
+              <!-- Details stage -->
+              <div class="grid grid-cols-3 gap-4 bg-gray-50 rounded-lg p-3 mb-3">
+                <div>
+                  <p class="text-xs text-gray-400">Entreprise</p>
+                  <p class="text-sm font-medium text-gray-700">{{ conv.nomEntreprise }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-400">Debut</p>
+                  <p class="text-sm font-medium text-gray-700">{{ conv.dateDebutStage.slice(0, 10) }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-400">Fin</p>
+                  <p class="text-sm font-medium text-gray-700">{{ conv.dateFinStage.slice(0, 10) }}</p>
+                </div>
+              </div>
+
+              @if (conv.commentaireEnseignant) {
+                <div class="bg-purple-50 rounded-lg p-3">
+                  <p class="text-xs font-medium text-purple-600 mb-1">Votre commentaire :</p>
+                  <p class="text-sm text-gray-700">{{ conv.commentaireEnseignant }}</p>
+                </div>
+              }
+            </div>
+
+            <!-- Actions -->
+            @if (conv.statut === "EN_ATTENTE") {
+              <div class="flex flex-col gap-2 ml-6 shrink-0 min-w-40">
+                <textarea [(ngModel)]="commentaire" rows="2"
+                  placeholder="Commentaire (optionnel)..."
+                  class="input-field text-xs resize-none"></textarea>
+                <button (click)="valider(conv.id)"
+                  class="bg-success-600 hover:bg-success-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">
+                  Valider
+                </button>
+                <button (click)="rejeter(conv.id)"
+                  class="bg-danger-600 hover:bg-danger-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">
+                  Rejeter
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @empty {
+        <div class="card text-center py-16">
+          <p class="text-gray-400 text-lg font-medium">Aucune convention</p>
+          <p class="text-gray-400 text-sm mt-1">Aucune convention ne vous est assignee pour le moment</p>
+        </div>
+      }
+    </div>
+  </main>
+</div>
