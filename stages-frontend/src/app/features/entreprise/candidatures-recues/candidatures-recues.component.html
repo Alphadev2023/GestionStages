@@ -8,26 +8,25 @@
       <label class="block text-sm font-medium text-gray-700 mb-2">Selectionner une offre</label>
       <select [(ngModel)]="selectedOffreId" (ngModelChange)="chargerCandidatures()"
         class="input-field w-full md:w-96">
-        <option [ngValue]="null">-- Choisir une offre --</option>
+        <option [ngValue]="null">-- Choisissez une offre --</option>
         @for (o of offres(); track o.id) {
-          <option [ngValue]="o.id">{{ o.titre }}</option>
+          <option [ngValue]="o.id">{{ o.titre }} ({{ o.statut }})</option>
         }
       </select>
     </div>
 
     @if (selectedOffreId && candidatures().length > 0) {
-      <!-- Stats -->
       <div class="grid grid-cols-3 gap-4 mb-6">
         <div class="card text-center py-3 border-l-4 border-warning-500">
-          <p class="text-2xl font-bold text-warning-600">{{ enAttente() }}</p>
+          <p class="text-2xl font-bold text-warning-600">{{ enAttente }}</p>
           <p class="text-xs text-gray-500 mt-1">En attente</p>
         </div>
         <div class="card text-center py-3 border-l-4 border-success-500">
-          <p class="text-2xl font-bold text-success-600">{{ acceptees() }}</p>
+          <p class="text-2xl font-bold text-success-600">{{ acceptees }}</p>
           <p class="text-xs text-gray-500 mt-1">Acceptees</p>
         </div>
         <div class="card text-center py-3 border-l-4 border-danger-500">
-          <p class="text-2xl font-bold text-danger-600">{{ refusees() }}</p>
+          <p class="text-2xl font-bold text-danger-600">{{ refusees }}</p>
           <p class="text-xs text-gray-500 mt-1">Refusees</p>
         </div>
       </div>
@@ -40,7 +39,7 @@
             <div class="flex justify-between items-start">
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
-                  <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                  <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
                     {{ c.nomEtudiant.charAt(0).toUpperCase() }}
                   </div>
                   <div>
@@ -50,20 +49,26 @@
                   <span [class]="badgeClass(c.statut)">{{ statutLabel(c.statut) }}</span>
                 </div>
                 @if (c.lettreMotivation) {
-                  <div class="ml-12 p-3 bg-gray-50 rounded-lg mt-2">
+                  <div class="ml-13 p-3 bg-gray-50 rounded-lg mt-2">
                     <p class="text-xs font-medium text-gray-500 mb-1">Lettre de motivation :</p>
                     <p class="text-sm text-gray-700 line-clamp-3">{{ c.lettreMotivation }}</p>
                   </div>
                 }
               </div>
-              <div class="flex flex-col items-end gap-2 ml-4 shrink-0">
+              <div class="flex flex-col gap-2 ml-4 shrink-0">
                 <a [href]="c.cvUrl" target="_blank"
-                  class="text-xs text-primary-600 hover:underline border border-primary-200 px-3 py-1.5 rounded-lg">
+                  class="text-xs text-primary-600 hover:underline border border-primary-200 px-3 py-1.5 rounded-lg text-center">
                   Voir CV
                 </a>
                 @if (c.statut === "EN_ATTENTE") {
-                  <button (click)="traiter(c.id, acceptee)" [class]="btnAccepter">Accepter</button>
-                  <button (click)="traiter(c.id, refusee)" [class]="btnRefuser">Refuser</button>
+                  <button (click)="ouvrirConfirmation(c, 'ACCEPTEE')"
+                    class="bg-success-600 hover:bg-success-700 text-white text-xs px-3 py-1.5 rounded-lg transition-colors">
+                    Accepter
+                  </button>
+                  <button (click)="ouvrirConfirmation(c, 'REFUSEE')"
+                    class="bg-danger-600 hover:bg-danger-700 text-white text-xs px-3 py-1.5 rounded-lg transition-colors">
+                    Refuser
+                  </button>
                 }
               </div>
             </div>
@@ -76,3 +81,73 @@
     }
   </main>
 </div>
+
+<!-- Modal confirmation -->
+@if (candidatureSelectionnee()) {
+  <div class="fixed inset-0 bg-black/50 z-40" (click)="fermerConfirmation()"></div>
+  <div class="fixed inset-0 z-50 overflow-y-auto pointer-events-none">
+    <div class="min-h-full flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto" (click)="$event.stopPropagation()">
+
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 class="text-lg font-semibold text-gray-900">
+            {{ actionSelectionnee === "ACCEPTEE" ? "Accepter cette candidature" : "Refuser cette candidature" }}
+          </h2>
+          <button (click)="fermerConfirmation()"
+            class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 text-lg font-bold">
+            x
+          </button>
+        </div>
+
+        <div class="px-6 py-5 space-y-4">
+
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+            <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
+              {{ candidatureSelectionnee()!.nomEtudiant.charAt(0).toUpperCase() }}
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900 text-sm">{{ candidatureSelectionnee()!.nomEtudiant }}</p>
+              <p class="text-xs text-gray-500">{{ candidatureSelectionnee()!.titreOffre }}</p>
+            </div>
+          </div>
+
+          @if (actionSelectionnee === "ACCEPTEE") {
+            <div class="p-3 bg-success-50 rounded-lg border border-success-200">
+              <p class="text-sm text-success-700 font-medium">
+                En acceptant, une convention sera creee automatiquement et assignee a un enseignant.
+              </p>
+            </div>
+          }
+          @if (actionSelectionnee === "REFUSEE") {
+            <div class="p-3 bg-danger-50 rounded-lg border border-danger-200">
+              <p class="text-sm text-danger-700 font-medium">
+                L etudiant sera notifie du refus de sa candidature.
+              </p>
+            </div>
+          }
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Feedback pour l etudiant
+              @if (actionSelectionnee === "REFUSEE") { <span class="text-danger-600 ml-1">*</span> }
+              @if (actionSelectionnee === "ACCEPTEE") { <span class="text-gray-400 text-xs ml-1">(optionnel)</span> }
+            </label>
+            <textarea [(ngModel)]="feedback" rows="3" class="input-field resize-none"
+              [placeholder]="actionSelectionnee === 'ACCEPTEE'
+                ? 'Ex: Excellent profil, nous avons hate de vous accueillir !'
+                : 'Ex: Votre profil ne correspond pas aux criteres requis...'">
+            </textarea>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button (click)="fermerConfirmation()" class="btn-secondary flex-1">Annuler</button>
+            <button (click)="confirmer()"
+              [class]="actionSelectionnee === 'ACCEPTEE' ? 'btn-success flex-1' : 'btn-danger flex-1'">
+              {{ actionSelectionnee === "ACCEPTEE" ? "Confirmer l acceptation" : "Confirmer le refus" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -3,64 +3,141 @@
   <app-navbar title="Mes candidatures" />
   <main class="p-6">
 
-    <div class="grid grid-cols-3 gap-4 mb-6">
-      <div class="card text-center py-4 border-l-4 border-warning-500">
-        <p class="text-2xl font-bold text-warning-600">{{ enAttente() }}</p>
+    <!-- Stats cliquables -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div (click)="changerFiltre('TOUS')"
+        class="card text-center py-4 border-l-4 border-gray-400 cursor-pointer hover:shadow-md transition-all"
+        [class.ring-2]="filtre === 'TOUS'" [class.ring-primary-400]="filtre === 'TOUS'">
+        <p class="text-2xl font-bold text-gray-700">{{ candidatures().length }}</p>
+        <p class="text-xs text-gray-500 mt-1">Toutes</p>
+      </div>
+      <div (click)="changerFiltre('EN_ATTENTE')"
+        class="card text-center py-4 border-l-4 border-warning-500 cursor-pointer hover:shadow-md transition-all"
+        [class.ring-2]="filtre === 'EN_ATTENTE'" [class.ring-primary-400]="filtre === 'EN_ATTENTE'">
+        <p class="text-2xl font-bold text-warning-600">{{ enAttente }}</p>
         <p class="text-xs text-gray-500 mt-1">En attente</p>
       </div>
-      <div class="card text-center py-4 border-l-4 border-success-500">
-        <p class="text-2xl font-bold text-success-600">{{ acceptees() }}</p>
+      <div (click)="changerFiltre('ACCEPTEE')"
+        class="card text-center py-4 border-l-4 border-success-500 cursor-pointer hover:shadow-md transition-all"
+        [class.ring-2]="filtre === 'ACCEPTEE'" [class.ring-primary-400]="filtre === 'ACCEPTEE'">
+        <p class="text-2xl font-bold text-success-600">{{ acceptees }}</p>
         <p class="text-xs text-gray-500 mt-1">Acceptees</p>
       </div>
-      <div class="card text-center py-4 border-l-4 border-danger-500">
-        <p class="text-2xl font-bold text-danger-600">{{ refusees() }}</p>
+      <div (click)="changerFiltre('REFUSEE')"
+        class="card text-center py-4 border-l-4 border-danger-500 cursor-pointer hover:shadow-md transition-all"
+        [class.ring-2]="filtre === 'REFUSEE'" [class.ring-primary-400]="filtre === 'REFUSEE'">
+        <p class="text-2xl font-bold text-danger-600">{{ refusees }}</p>
         <p class="text-xs text-gray-500 mt-1">Refusees</p>
       </div>
     </div>
 
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-sm text-gray-500 font-medium">{{ listeFiltree.length }} candidature(s)</p>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500">Afficher</span>
+        <select [ngModel]="size" (ngModelChange)="changerSize($event)"
+          class="text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500">
+          <option [ngValue]="3">3 par page</option>
+          <option [ngValue]="6">6 par page</option>
+          <option [ngValue]="9">9 par page</option>
+          <option [ngValue]="12">12 par page</option>
+        </select>
+      </div>
+    </div>
+
     @if (loading()) {
-      <div class="text-center py-12 text-gray-400">Chargement...</div>
-    } @else if (candidatures().length === 0) {
-      <div class="card text-center py-16">
-        <p class="text-gray-400 text-lg font-medium mb-2">Aucune candidature</p>
-        <p class="text-gray-400 text-sm mb-6">Vous n avez pas encore postule a une offre</p>
-        <a routerLink="/etudiant/offres" class="btn-primary">Voir les offres disponibles</a>
+      <div class="flex flex-col items-center justify-center py-16 gap-3">
+        <div class="relative w-12 h-12">
+          <div class="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
+          <div class="absolute inset-0 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p class="text-sm text-gray-500 animate-pulse">Chargement...</p>
       </div>
     } @else {
-      <div class="grid gap-4">
-        @for (c of candidatures(); track c.id) {
-          <div class="card hover:shadow-md transition-shadow">
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
-                  <h3 class="font-semibold text-gray-900">{{ c.titreOffre }}</h3>
-                  <span [class]="getBadge(c.statut)">{{ getStatutLabel(c.statut) }}</span>
+
+      <!-- Grille 3 colonnes -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (c of listePage; track c.id) {
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+            <div class="p-4 border-b border-gray-100">
+              <div class="flex items-start justify-between gap-2 mb-1">
+                <h3 class="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 flex-1">{{ c.titreOffre }}</h3>
+                <span [class]="badgeClass(c.statut) + ' shrink-0 text-xs'">{{ statutLabel(c.statut) }}</span>
+              </div>
+              <p class="text-xs text-gray-500 font-medium">{{ c.nomEntreprise }}</p>
+            </div>
+            <div class="p-4 flex-1">
+              <p class="text-xs text-gray-400 mb-3">Postule le {{ c.createdAt.slice(0, 10) }}</p>
+              @if (c.feedbackEntreprise) {
+                <div class="p-2.5 bg-gray-50 rounded-lg border border-gray-100 mb-2">
+                  <p class="text-xs font-medium text-gray-600 mb-1">Feedback :</p>
+                  <p class="text-xs text-gray-700 line-clamp-3">{{ c.feedbackEntreprise }}</p>
                 </div>
-                <p class="text-sm text-gray-600 mb-1">{{ c.nomEntreprise }}</p>
-                <p class="text-xs text-gray-400">Postule le {{ c.createdAt.slice(0, 10) }}</p>
-                @if (c.feedbackEntreprise) {
-                  <div class="mt-3 p-3 bg-gray-50 rounded-lg">
-                    <p class="text-xs font-medium text-gray-600 mb-1">Feedback entreprise :</p>
-                    <p class="text-sm text-gray-700">{{ c.feedbackEntreprise }}</p>
-                  </div>
-                }
-              </div>
-              <div class="flex flex-col items-end gap-2 ml-4 shrink-0">
-                <a [href]="c.cvUrl" target="_blank"
-                  class="text-xs text-primary-600 hover:underline border border-primary-200 px-3 py-1.5 rounded-lg">
-                  Voir mon CV
+              }
+              @if (c.statut === "ACCEPTEE") {
+                <div class="p-2.5 bg-success-50 rounded-lg border border-success-200">
+                  <p class="text-xs text-success-700 font-medium">Felicitations ! Candidature acceptee.</p>
+                </div>
+              }
+              @if (c.statut === "REFUSEE") {
+                <div class="p-2.5 bg-danger-50 rounded-lg border border-danger-200">
+                  <p class="text-xs text-danger-700">Candidature non retenue cette fois.</p>
+                </div>
+              }
+            </div>
+            <div class="p-3 border-t border-gray-100 flex gap-2">
+              <a [href]="c.cvUrl" target="_blank"
+                class="flex-1 text-xs text-center text-primary-600 hover:text-primary-800 border border-primary-200 hover:bg-primary-50 py-1.5 rounded-lg transition-colors">
+                Voir mon CV
+              </a>
+              @if (c.statut === "ACCEPTEE") {
+                <a routerLink="/messagerie"
+                  class="flex-1 text-xs text-center text-success-600 hover:text-success-800 border border-success-200 hover:bg-success-50 py-1.5 rounded-lg transition-colors">
+                  Contacter
                 </a>
-                @if (c.statut === "ACCEPTEE") {
-                  <a routerLink="/messagerie"
-                    class="text-xs text-success-600 hover:underline border border-success-200 px-3 py-1.5 rounded-lg">
-                    Contacter l entreprise
-                  </a>
-                }
-              </div>
+              }
             </div>
           </div>
         }
+        @empty {
+          <div class="col-span-3 text-center py-16 bg-white rounded-xl border border-gray-200">
+            <p class="text-gray-400 text-lg font-medium mb-2">Aucune candidature</p>
+            @if (filtre !== "TOUS") {
+              <button (click)="changerFiltre('TOUS')" class="text-sm text-primary-600 hover:underline">
+                Voir toutes
+              </button>
+            } @else {
+              <a routerLink="/etudiant/offres" class="btn-primary">Voir les offres</a>
+            }
+          </div>
+        }
       </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="flex items-center justify-between mt-6 px-1">
+          <p class="text-sm text-gray-500">Page {{ page + 1 }} sur {{ totalPages }}</p>
+          <div class="flex items-center gap-2">
+            <button [disabled]="page === 0" (click)="changerPage(page - 1)"
+              class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              Precedent
+            </button>
+            <div class="flex gap-1">
+              @for (p of pagesArray; track p) {
+                <button (click)="changerPage(p)"
+                  [class]="p === page ? 'w-8 h-8 text-sm rounded-lg bg-primary-600 text-white font-bold' : 'w-8 h-8 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-600'">
+                  {{ p + 1 }}
+                </button>
+              }
+            </div>
+            <button [disabled]="page >= totalPages - 1" (click)="changerPage(page + 1)"
+              class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              Suivant
+            </button>
+          </div>
+        </div>
+      }
     }
   </main>
 </div>

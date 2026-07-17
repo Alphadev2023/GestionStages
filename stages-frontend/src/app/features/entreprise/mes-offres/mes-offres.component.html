@@ -6,156 +6,266 @@
     <!-- KPIs -->
     <div class="grid grid-cols-3 gap-4 mb-6">
       <div class="card text-center py-4 border-l-4 border-primary-500">
-        <p class="text-2xl font-bold text-primary-600">{{ offres().length }}</p>
+        <p class="text-3xl font-bold text-primary-600">{{ offres().length }}</p>
         <p class="text-xs text-gray-500 mt-1">Total publiees</p>
       </div>
       <div class="card text-center py-4 border-l-4 border-success-500">
-        <p class="text-2xl font-bold text-success-600">{{ actives }}</p>
+        <p class="text-3xl font-bold text-success-600">{{ actives }}</p>
         <p class="text-xs text-gray-500 mt-1">Actives</p>
       </div>
       <div class="card text-center py-4 border-l-4 border-gray-400">
-        <p class="text-2xl font-bold text-gray-500">{{ archivees }}</p>
+        <p class="text-3xl font-bold text-gray-500">{{ archivees }}</p>
         <p class="text-xs text-gray-500 mt-1">Archivees</p>
       </div>
     </div>
 
+    <!-- Header -->
     <div class="flex justify-between items-center mb-4">
-      <p class="text-gray-600 text-sm">{{ offres().length }} offre(s) publiee(s)</p>
-      <button (click)="showForm.set(true)" class="btn-primary">Publier une offre</button>
+      <div class="flex items-center gap-3">
+        <p class="text-gray-600 text-sm font-medium">{{ offres().length }} offre(s)</p>
+        <select [ngModel]="size" (ngModelChange)="changerSize($event)"
+          class="text-sm border border-gray-300 rounded-lg px-2 py-1.5 text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500">
+          <option [ngValue]="3">3 par page</option>
+          <option [ngValue]="6">6 par page</option>
+          <option [ngValue]="9">9 par page</option>
+          <option [ngValue]="12">12 par page</option>
+        </select>
+      </div>
+      <button (click)="ouvrirForm()" class="btn-primary">+ Publier une offre</button>
     </div>
 
-    <div class="grid gap-4">
-      @for (offre of offres(); track offre.id) {
-        <div class="card hover:shadow-md transition-shadow cursor-pointer" (click)="toggleDetail(offre.id)">
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <h3 class="font-semibold text-gray-900 text-lg">{{ offre.titre }}</h3>
-                <span [class]="offre.statut === activeStatut ? badgeActive : badgeRefuse">{{ offre.statut }}</span>
+    <!-- Grille 3 colonnes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (offre of offresPage; track offre.id) {
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
+
+          <!-- Header card -->
+          <div class="p-4 border-b border-gray-100">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <h3 class="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 flex-1">{{ offre.titre }}</h3>
+              <span [class]="offre.statut === activeStatut ? badgeActive : badgeRefuse" class="shrink-0 text-xs">
+                {{ offre.statut }}
+              </span>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-primary-100 text-primary-700">
+              {{ offre.domaine }}
+            </span>
+          </div>
+
+          <!-- Body card -->
+          <div class="p-4 flex-1 space-y-1.5 text-xs text-gray-600">
+            <div class="flex justify-between">
+              <span class="text-gray-400">Localisation</span>
+              <span class="font-medium">{{ offre.localisation }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Duree</span>
+              <span class="font-medium">{{ offre.dureeMois }} mois</span>
+            </div>
+            @if (offre.remuneration) {
+              <div class="flex justify-between">
+                <span class="text-gray-400">Remuneration</span>
+                <span class="font-medium text-success-600">{{ offre.remuneration | number }} F</span>
               </div>
-              <div class="flex gap-4 text-sm text-gray-500 mb-2">
-                <span class="text-primary-600 font-medium">{{ offre.domaine }}</span>
-                <span>{{ offre.localisation }}</span>
-                <span>{{ offre.dureeMois }} mois</span>
-                @if (offre.remuneration) {
-                  <span>{{ offre.remuneration | number }} F/mois</span>
+            }
+            <div class="flex justify-between">
+              <span class="text-gray-400">Postes</span>
+              <span class="font-medium">{{ offre.nombrePostes }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Expire</span>
+              <span class="font-medium">{{ offre.dateExpiration.slice(0, 10) }}</span>
+            </div>
+
+            @if (detailId === offre.id) {
+              <div class="mt-3 pt-3 border-t border-gray-100">
+                <p class="text-xs text-gray-700 mb-2">{{ offre.description }}</p>
+                @if (competences(offre).length > 0) {
+                  <div class="flex flex-wrap gap-1">
+                    @for (c of competences(offre); track c) {
+                      <span class="text-xs bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded border border-primary-100">{{ c }}</span>
+                    }
+                  </div>
                 }
               </div>
-              <div class="flex gap-4 text-xs text-gray-400">
-                <span>Debut : {{ offre.dateDebut.slice(0, 10) }}</span>
-                <span>Expire : {{ offre.dateExpiration.slice(0, 10) }}</span>
-                <span>{{ offre.nombrePostes }} poste(s)</span>
-              </div>
+            }
+          </div>
 
-              @if (detailId === offre.id) {
-                <div class="mt-4 pt-4 border-t border-gray-100">
-                  <p class="text-sm text-gray-700 mb-3">{{ offre.description }}</p>
-                  @if (competences(offre).length > 0) {
-                    <div class="flex flex-wrap gap-2">
-                      @for (c of competences(offre); track c) {
-                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ c }}</span>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-
-            <div class="flex flex-col gap-2 ml-4 shrink-0">
-              @if (offre.statut === activeStatut) {
-                <button (click)="archiver(offre.id)" class="btn-secondary text-sm">Archiver</button>
-              }
-              <span class="text-xs text-gray-400 text-center">{{ detailId === offre.id ? "Masquer" : "Details" }}</span>
-            </div>
+          <!-- Footer card -->
+          <div class="p-3 border-t border-gray-100 flex gap-2">
+            <button (click)="toggleDetail(offre.id)"
+              class="flex-1 text-xs text-gray-500 hover:text-primary-600 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+              {{ detailId === offre.id ? "Masquer" : "Voir details" }}
+            </button>
+            @if (offre.statut === activeStatut) {
+              <button (click)="archiver(offre.id)"
+                class="flex-1 text-xs text-danger-600 hover:bg-danger-50 py-1.5 rounded-lg border border-danger-200 transition-colors">
+                Archiver
+              </button>
+            }
           </div>
         </div>
       }
 
       @empty {
-        <div class="card text-center py-16">
+        <div class="col-span-3 text-center py-16 bg-white rounded-xl border border-gray-200">
           <p class="text-gray-400 text-lg font-medium mb-2">Aucune offre publiee</p>
-          <p class="text-gray-400 text-sm mb-6">Publiez votre premiere offre de stage</p>
-          <button (click)="showForm.set(true)" class="btn-primary">Publier une offre</button>
+          <button (click)="ouvrirForm()" class="btn-primary">Publier ma premiere offre</button>
         </div>
       }
     </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1) {
+      <div class="flex items-center justify-between mt-6 px-1">
+        <p class="text-sm text-gray-500">Page {{ page + 1 }} sur {{ totalPages }} — {{ offres().length }} offres</p>
+        <div class="flex items-center gap-2">
+          <button [disabled]="page === 0" (click)="changerPage(page - 1)"
+            class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            Precedent
+          </button>
+          <div class="flex gap-1">
+            @for (p of pagesArray; track p) {
+              <button (click)="changerPage(p)"
+                [class]="p === page ? 'w-8 h-8 text-sm rounded-lg bg-primary-600 text-white font-bold' : 'w-8 h-8 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-600'">
+                {{ p + 1 }}
+              </button>
+            }
+          </div>
+          <button [disabled]="page >= totalPages - 1" (click)="changerPage(page + 1)"
+            class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            Suivant
+          </button>
+        </div>
+      </div>
+    }
   </main>
 </div>
 
 <!-- Modal publication -->
 @if (showForm()) {
-  <div class="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
-    <div class="min-h-full flex items-center justify-center p-4">
-      <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl my-4 p-6">
+  <!-- Backdrop fixe -->
+  <div class="fixed inset-0 bg-black/50 z-40" (click)="fermerForm()"></div>
+  <!-- Modal scrollable -->
+  <div class="fixed inset-0 z-50 overflow-y-auto pointer-events-none">
+    <div class="min-h-full flex items-start justify-center p-4 py-8">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl pointer-events-auto" (click)="$event.stopPropagation()">
 
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Publier une offre de stage</h3>
-          <button (click)="showForm.set(false)"
-            class="text-gray-400 hover:text-gray-600 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
+          <h2 class="text-lg font-semibold text-gray-900">Publier une offre de stage</h2>
+          <button (click)="fermerForm()"
+            class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-lg font-bold">
             x
           </button>
         </div>
 
-        @if (formError()) {
-          <div class="bg-danger-100 text-danger-700 rounded-lg p-3 mb-4 text-sm">{{ formError() }}</div>
-        }
+        <form (ngSubmit)="publier()" class="px-6 py-5 space-y-4">
 
-        <form (ngSubmit)="publier()" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Titre du poste</label>
-            <input [(ngModel)]="form.titre" name="titre" required class="input-field" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Titre du poste <span class="text-danger-600">*</span>
+            </label>
+            <input [(ngModel)]="form.titre" name="titre"
+              placeholder="Ex: Developpeur Full Stack Java/Angular"
+              class="input-field" [class.border-danger-400]="formErrors['titre']" />
+            @if (formErrors['titre']) {
+              <p class="text-xs text-danger-600 mt-1">{{ formErrors['titre'] }}</p>
+            }
           </div>
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea [(ngModel)]="form.description" name="description" rows="3" class="input-field resize-none" required></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Description <span class="text-danger-600">*</span>
+            </label>
+            <textarea [(ngModel)]="form.description" name="description" rows="3"
+              placeholder="Decrivez les missions, les responsabilites et le profil recherche..."
+              class="input-field resize-none" [class.border-danger-400]="formErrors['description']"></textarea>
+            @if (formErrors['description']) {
+              <p class="text-xs text-danger-600 mt-1">{{ formErrors['description'] }}</p>
+            }
           </div>
+
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Domaine</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Domaine <span class="text-danger-600">*</span></label>
               <select [(ngModel)]="form.domaine" name="domaine" class="input-field">
                 @for (d of domaines; track d) { <option [value]="d">{{ d }}</option> }
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
-              <input [(ngModel)]="form.localisation" name="localisation" class="input-field" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Localisation <span class="text-danger-600">*</span></label>
+              <input [(ngModel)]="form.localisation" name="localisation"
+                placeholder="Ex: Conakry, Guinee"
+                class="input-field" [class.border-danger-400]="formErrors['localisation']" />
+              @if (formErrors['localisation']) {
+                <p class="text-xs text-danger-600 mt-1">{{ formErrors['localisation'] }}</p>
+              }
             </div>
           </div>
+
           <div class="grid grid-cols-3 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Duree (mois)</label>
-              <input type="number" [(ngModel)]="form.dureeMois" name="dureeMois" min="1" class="input-field" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Duree (mois) <span class="text-danger-600">*</span></label>
+              <input type="number" [(ngModel)]="form.dureeMois" name="dureeMois" min="1"
+                (ngModelChange)="onDureeChange()"
+                placeholder="Ex: 3" class="input-field" />
+              <p class="text-xs text-gray-400 mt-1">La date d expiration se calcule auto</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Date debut</label>
-              <input type="date" [(ngModel)]="form.dateDebut" name="dateDebut" class="input-field" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date debut <span class="text-danger-600">*</span></label>
+              <input type="date" [(ngModel)]="form.dateDebut" name="dateDebut"
+                [min]="today" (ngModelChange)="onDateDebutChange()"
+                class="input-field" [class.border-danger-400]="formErrors['dateDebut']" />
+              @if (formErrors['dateDebut']) {
+                <p class="text-xs text-danger-600 mt-1">{{ formErrors['dateDebut'] }}</p>
+              }
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Date expiration</label>
-              <input type="date" [(ngModel)]="form.dateExpiration" name="dateExpiration" class="input-field" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date expiration <span class="text-danger-600">*</span></label>
+              <input type="date" [(ngModel)]="form.dateExpiration" name="dateExpiration"
+                [min]="today"
+                class="input-field" [class.border-danger-400]="formErrors['dateExpiration']" />
+              @if (formErrors['dateExpiration']) {
+                <p class="text-xs text-danger-600 mt-1">{{ formErrors['dateExpiration'] }}</p>
+              } @else {
+                <p class="text-xs text-gray-400 mt-1">Calculee automatiquement</p>
+              }
             </div>
           </div>
+
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Remuneration (F/mois)</label>
-              <input type="number" [(ngModel)]="form.remuneration" name="remuneration" class="input-field" />
+              <input type="number" [(ngModel)]="form.remuneration" name="remuneration"
+                placeholder="Ex: 500000 (optionnel)" class="input-field" />
+              <p class="text-xs text-gray-400 mt-1">Laissez vide si non remunere</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de postes</label>
-              <input type="number" [(ngModel)]="form.nombrePostes" name="nombrePostes" min="1" class="input-field" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de postes <span class="text-danger-600">*</span></label>
+              <input type="number" [(ngModel)]="form.nombrePostes" name="nombrePostes" min="1"
+                placeholder="Ex: 2" class="input-field" />
             </div>
           </div>
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Competences requises <span class="text-xs text-gray-400">(separees par des virgules)</span>
-            </label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Competences requises</label>
             <textarea [(ngModel)]="form.competencesRequises" name="competencesRequises" rows="2"
-              class="input-field resize-none" placeholder="Java, Spring Boot, Angular..."></textarea>
+              placeholder="Ex: Java, Spring Boot, Angular, SQL (separees par des virgules)"
+              class="input-field resize-none"></textarea>
+            <p class="text-xs text-gray-400 mt-1">Separees par des virgules</p>
           </div>
-          <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
-            <button type="button" (click)="showForm.set(false)" class="btn-secondary">Annuler</button>
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <button type="button" (click)="fermerForm()" class="btn-secondary">Annuler</button>
             <button type="submit" [disabled]="formLoading()" class="btn-primary">
-              {{ formLoading() ? "Publication..." : "Publier" }}
+              @if (formLoading()) {
+                <span class="flex items-center gap-2">
+                  <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Publication...
+                </span>
+              } @else {
+                Publier l offre
+              }
             </button>
           </div>
         </form>

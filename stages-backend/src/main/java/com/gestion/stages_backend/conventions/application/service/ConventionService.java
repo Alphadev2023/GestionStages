@@ -75,6 +75,24 @@ public class ConventionService {
     }
 
     @Transactional(readOnly = true)
+    public PageResponse<ConventionResponse> findByEnseignant(
+            String email, StatutConvention statut, Pageable pageable) {
+
+        User enseignant = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Enseignant introuvable"));
+
+        if (statut == null) {
+            return PageResponse.of(
+                conventionRepository.findByEnseignantId(enseignant.getId(), pageable)
+                    .map(conventionMapper::toResponse));
+        }
+        return PageResponse.of(
+            conventionRepository.findByEnseignantIdAndStatut(
+                enseignant.getId(), statut, pageable)
+                    .map(conventionMapper::toResponse));
+    }
+
+    @Transactional(readOnly = true)
     public PageResponse<ConventionResponse> findByStatut(StatutConvention statut, Pageable pageable) {
         if (statut == null) {
             // Retourner toutes les conventions sans filtre

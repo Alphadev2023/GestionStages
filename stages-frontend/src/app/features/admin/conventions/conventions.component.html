@@ -1,0 +1,96 @@
+<app-sidebar />
+<div class="ml-64 min-h-screen bg-gray-50">
+  <app-navbar title="Gestion des conventions" />
+  <main class="p-6">
+
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="card text-center py-4 border-l-4 border-warning-500">
+        <p class="text-2xl font-bold text-warning-600">{{ enAttente }}</p>
+        <p class="text-xs text-gray-500 mt-1">En attente</p>
+      </div>
+      <div class="card text-center py-4 border-l-4 border-primary-500">
+        <p class="text-2xl font-bold text-primary-600">{{ valideeEnseignant }}</p>
+        <p class="text-xs text-gray-500 mt-1">Validees enseignant</p>
+      </div>
+      <div class="card text-center py-4 border-l-4 border-success-500">
+        <p class="text-2xl font-bold text-success-600">{{ approuvees }}</p>
+        <p class="text-xs text-gray-500 mt-1">Approuvees</p>
+      </div>
+      <div class="card text-center py-4 border-l-4 border-danger-500">
+        <p class="text-2xl font-bold text-danger-600">{{ rejetees }}</p>
+        <p class="text-xs text-gray-500 mt-1">Rejetees</p>
+      </div>
+    </div>
+
+    <div class="card mb-6 flex gap-3 flex-wrap">
+      @for (s of statuts; track s.label) {
+        <button (click)="setFiltre(s.value)"
+          [class]="filtreStatut === s.value ? btnActif : btnInactif">
+          {{ s.label }}
+        </button>
+      }
+    </div>
+
+    <div class="grid gap-4">
+      @for (conv of conventions(); track conv.id) {
+        <div class="card hover:shadow-md transition-shadow">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                  {{ conv.nomEtudiant.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900">{{ conv.nomEtudiant }}</p>
+                  <p class="text-xs text-gray-500">{{ conv.titreOffre }}</p>
+                </div>
+                <span [class]="badgeClass(conv.statut)">{{ statutLabel(conv.statut) }}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-4 text-xs ml-12">
+                <div>
+                  <p class="font-medium text-gray-600 mb-1">Entreprise</p>
+                  <p class="text-gray-800">{{ conv.nomEntreprise }}</p>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-600 mb-1">Enseignant assigne</p>
+                  <p class="text-gray-800">{{ conv.nomEnseignant ?? "Non assigne" }}</p>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-600 mb-1">Periode de stage</p>
+                  <p class="text-gray-800">{{ conv.dateDebutStage.slice(0, 10) }} au {{ conv.dateFinStage.slice(0, 10) }}</p>
+                </div>
+              </div>
+              @if (conv.commentaireEnseignant) {
+                <div class="ml-12 mt-3 p-2 bg-blue-50 rounded-lg border-l-2 border-blue-400">
+                  <p class="text-xs font-medium text-blue-700 mb-0.5">Commentaire enseignant</p>
+                  <p class="text-xs text-blue-600">{{ conv.commentaireEnseignant }}</p>
+                </div>
+              }
+            </div>
+            <div class="ml-4 shrink-0 text-right">
+              @if (conv.statut === "APPROUVEE_ADMIN") {
+                <p class="text-xs text-success-600 font-medium">Approuvee</p>
+                <p class="text-xs text-gray-400">{{ conv.dateApprouveAdmin?.slice(0, 10) }}</p>
+              }
+              @if (conv.statut === "EN_ATTENTE") {
+                <p class="text-xs text-warning-600">Attente validation<br>enseignant</p>
+              }
+              @if (conv.statut === "VALIDEE_ENSEIGNANT") {
+                <p class="text-xs text-primary-600">Validee par<br>{{ conv.nomEnseignant }}</p>
+              }
+              @if (conv.statut === "REJETEE") {
+                <p class="text-xs text-danger-600 font-medium">Rejetee</p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+      @empty {
+        <div class="card text-center py-16 text-gray-400">
+          <p class="text-lg font-medium">Aucune convention</p>
+          <p class="text-sm mt-1">Les conventions apparaissent automatiquement apres acceptation des candidatures</p>
+        </div>
+      }
+    </div>
+  </main>
+</div>

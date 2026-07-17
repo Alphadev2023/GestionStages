@@ -50,6 +50,7 @@ class CandidatureServiceTest {
     @Mock JpaOffreRepository       offreRepository;
     @Mock MinioStorageService      storageService;
     @Mock CandidatureMapper        candidatureMapper;
+    @Mock com.gestion.stages_backend.conventions.infrastructure.persistence.JpaConventionRepository conventionRepository;
 
     @InjectMocks CandidatureService candidatureService;
 
@@ -163,6 +164,9 @@ class CandidatureServiceTest {
     void traiter_accepter() {
         when(candidatureRepository.findById(1L)).thenReturn(Optional.of(candidature));
         when(candidatureRepository.save(candidature)).thenReturn(candidature);
+        when(conventionRepository.existsByCandidatureId(1L)).thenReturn(false);
+        // Aucun enseignant disponible — convention non creee mais pas d erreur
+        when(userRepository.findAll()).thenReturn(java.util.List.of());
         when(candidatureMapper.toResponse(candidature)).thenReturn(
                 CandidatureResponse.builder().id(1L).statut(StatutCandidature.ACCEPTEE).build());
 

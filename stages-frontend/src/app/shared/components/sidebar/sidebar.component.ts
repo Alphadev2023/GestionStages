@@ -73,6 +73,7 @@ export class SidebarComponent {
       ADMIN: [
         { label: "Tableau de bord", path: "/admin/dashboard" },
         { label: "Utilisateurs",    path: "/admin/utilisateurs" },
+        { label: "Conventions",     path: "/admin/conventions" },
         { label: "Reporting",       path: "/admin/reporting" },
       ],
     };

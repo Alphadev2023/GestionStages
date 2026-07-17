@@ -47,6 +47,7 @@ export const routes: Routes = [
       { path: "",             redirectTo: "dashboard", pathMatch: "full" },
       { path: "dashboard",    loadComponent: () => import("./features/admin/dashboard/dashboard.component").then(m => m.AdminDashboardComponent) },
       { path: "utilisateurs", loadComponent: () => import("./features/admin/utilisateurs/utilisateurs.component").then(m => m.UtilisateursComponent) },
+      { path: "conventions",  loadComponent: () => import("./features/admin/conventions/conventions.component").then(m => m.AdminConventionsComponent) },
       { path: "reporting",    loadComponent: () => import("./features/admin/reporting/reporting.component").then(m => m.ReportingComponent) },
     ]
   },

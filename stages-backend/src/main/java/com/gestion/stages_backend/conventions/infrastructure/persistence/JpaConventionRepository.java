@@ -11,4 +11,7 @@ import org.springframework.stereotype.Repository;
 public interface JpaConventionRepository extends JpaRepository<Convention, Long> {
     Page<Convention> findByStatut(StatutConvention statut, Pageable pageable);
     Page<Convention> findByEnseignantId(Long enseignantId, Pageable pageable);
+    Page<Convention> findByEnseignantIdAndStatut(Long enseignantId, StatutConvention statut, Pageable pageable);
+    boolean existsByCandidatureId(Long candidatureId);
+    long countByEnseignantIdAndStatut(Long enseignantId, StatutConvention statut);
 }

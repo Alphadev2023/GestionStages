@@ -1,0 +1,323 @@
+<app-sidebar />
+<div class="ml-64 min-h-screen bg-gray-50">
+  <app-navbar title="Offres de stage" />
+  <main class="p-6">
+    <!-- Filtres -->
+    <div class="card mb-6 flex flex-wrap gap-4 items-end">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Domaine</label>
+        <select [(ngModel)]="filtresDomaine" class="input-field w-48">
+          <option value="">Tous les domaines</option>
+          @for (d of domaines; track d) {
+            <option [value]="d">{{ d }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Localisation</label>
+        <input
+          [(ngModel)]="filtresLocalisation"
+          placeholder="Ex: Conakry, Guinee..."
+          class="input-field w-48"
+        />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Duree (mois)</label>
+        <input
+          type="number"
+          [(ngModel)]="filtresDuree"
+          placeholder="Ex: 3"
+          class="input-field w-32"
+        />
+      </div>
+      <button (click)="rechercher()" class="btn-primary">Rechercher</button>
+      <button (click)="reinitialiser()" class="btn-secondary">Reinitialiser</button>
+      @if (filiereEtudiant) {
+        <button
+          (click)="afficherTout = !afficherTout; page = 0"
+          class="text-sm text-primary-600 hover:underline"
+        >
+          {{
+            afficherTout
+              ? 'Voir seulement mon domaine (' + filiereEtudiant + ')'
+              : 'Voir toutes les offres'
+          }}
+        </button>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-16 gap-3">
+        <div class="relative w-12 h-12">
+          <div class="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
+          <div
+            class="absolute inset-0 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"
+          ></div>
+        </div>
+        <p class="text-sm text-gray-500 animate-pulse">Recherche des offres...</p>
+      </div>
+    } @else {
+      <!-- Header resultats -->
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-sm text-gray-500 font-medium">
+          {{ offresAffichees.length }} offre(s) trouvee(s)
+        </p>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-500">Afficher</span>
+          <select
+            [ngModel]="size"
+            (ngModelChange)="changerSize($event)"
+            class="text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option [ngValue]="3">3 par page</option>
+            <option [ngValue]="6">6 par page</option>
+            <option [ngValue]="9">9 par page</option>
+            <option [ngValue]="12">12 par page</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Grille 3 colonnes -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (offre of offresPage; track offre.id) {
+          <div
+            class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col"
+          >
+            <!-- Header card -->
+            <div class="p-4 border-b border-gray-100">
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <h3 class="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 flex-1">
+                  {{ offre.titre }}
+                </h3>
+                @if (isRecommandee(offre.domaine)) {
+                  <span
+                    class="shrink-0 text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-300 font-medium"
+                  >
+                    Pour vous
+                  </span>
+                }
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full font-medium"
+                  [class]="domaineClass(offre.domaine)"
+                >
+                  {{ offre.domaine }}
+                </span>
+                <span class="text-xs text-gray-500 font-medium">{{ offre.nomEntreprise }}</span>
+              </div>
+            </div>
+
+            <!-- Body card -->
+            <div class="p-4 flex-1 space-y-1.5">
+              <p class="text-xs text-gray-600 line-clamp-2 mb-2">{{ offre.description }}</p>
+              <div class="grid grid-cols-2 gap-1 text-xs text-gray-500">
+                <span> {{ offre.localisation }}</span>
+                <span>{{ offre.dureeMois }} mois</span>
+                @if (offre.remuneration) {
+                  <span class="text-success-600 font-medium">
+                    {{ offre.remuneration | number }} F</span
+                  >
+                }
+                <span>{{ offre.nombrePostes }} poste(s)</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1">
+                Expire le {{ offre.dateExpiration.slice(0, 10) }}
+              </p>
+            </div>
+
+            <!-- Footer card -->
+            <div class="p-3 border-t border-gray-100">
+              <button (click)="ouvrirPostulation(offre)" class="btn-primary w-full text-sm py-2">
+                Postuler a cette offre
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <div class="col-span-3 text-center py-16 bg-white rounded-xl border border-gray-200">
+            <p class="text-gray-400 text-lg font-medium mb-1">Aucune offre trouvee</p>
+            <p class="text-sm text-gray-400">
+              Essayez de modifier vos filtres ou reinitialisez la recherche
+            </p>
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="flex items-center justify-between mt-6 px-1">
+          <p class="text-sm text-gray-500">
+            Page {{ page + 1 }} sur {{ totalPages }} — {{ offresAffichees.length }} offres
+          </p>
+          <div class="flex items-center gap-2">
+            <button
+              [disabled]="page === 0"
+              (click)="changerPage(page - 1)"
+              class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Precedent
+            </button>
+            <div class="flex gap-1">
+              @for (p of pagesArray; track p) {
+                <button
+                  (click)="changerPage(p)"
+                  [class]="
+                    p === page
+                      ? 'w-8 h-8 text-sm rounded-lg bg-primary-600 text-white font-bold'
+                      : 'w-8 h-8 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-600'
+                  "
+                >
+                  {{ p + 1 }}
+                </button>
+              }
+            </div>
+            <button
+              [disabled]="page >= totalPages - 1"
+              (click)="changerPage(page + 1)"
+              class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Suivant
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </main>
+</div>
+
+<!-- Modal postulation -->
+@if (offreSelectionnee()) {
+  <div class="fixed inset-0 bg-black/50 z-40" (click)="fermerPostulation()"></div>
+  <div class="fixed inset-0 z-50 overflow-y-auto pointer-events-none">
+    <div class="min-h-full flex items-start justify-center p-4 py-8">
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 class="text-lg font-semibold text-gray-900">
+            Postuler : {{ offreSelectionnee()!.titre }}
+          </h2>
+          <button
+            (click)="fermerPostulation()"
+            class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 text-lg font-bold"
+          >
+            x
+          </button>
+        </div>
+
+        <div class="px-6 py-5 space-y-5">
+          <!-- Info offre -->
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div
+              class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center shrink-0"
+            >
+              <span class="text-primary-600 font-bold">{{
+                offreSelectionnee()!.nomEntreprise.charAt(0)
+              }}</span>
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900 text-sm">
+                {{ offreSelectionnee()!.nomEntreprise }}
+              </p>
+              <p class="text-xs text-gray-500">
+                {{ offreSelectionnee()!.localisation }} — {{ offreSelectionnee()!.dureeMois }} mois
+              </p>
+            </div>
+          </div>
+
+          <!-- Upload CV -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              CV en format PDF <span class="text-danger-600">*</span>
+            </label>
+            <div
+              class="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors"
+              [class.border-success-400]="cvFile()"
+              [class.bg-success-50]="cvFile()"
+              [class.border-danger-400]="cvError && !cvFile()"
+              [class.bg-danger-50]="cvError && !cvFile()"
+              [class.border-gray-300]="!cvFile() && !cvError"
+              [class.hover:border-primary-400]="!cvFile()"
+            >
+              <input
+                type="file"
+                accept=".pdf"
+                id="cv-upload"
+                class="hidden"
+                (change)="onCvChange($event)"
+              />
+              <label for="cv-upload" class="cursor-pointer block">
+                @if (cvFile()) {
+                  <p class="text-success-600 font-medium text-sm">{{ cvFile()!.name }}</p>
+                  <p class="text-xs text-success-500 mt-1">Cliquez pour changer le fichier</p>
+                } @else {
+                  <p class="text-gray-500 text-sm font-medium">
+                    Cliquez pour selectionner votre CV
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1">Format PDF uniquement — max 10MB</p>
+                }
+              </label>
+            </div>
+            @if (cvError) {
+              <p class="text-xs text-danger-600 mt-1">{{ cvError }}</p>
+            }
+          </div>
+
+          <!-- Lettre de motivation -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Lettre de motivation <span class="text-danger-600">*</span>
+            </label>
+            <textarea
+              [(ngModel)]="lettreMotivation"
+              rows="6"
+              class="input-field resize-none"
+              [class.border-danger-400]="lettreError"
+              placeholder="Bonjour,
+
+Je me permets de vous contacter afin de postuler au poste de...
+
+Fort(e) de mes competences en [domaine], je suis convaincu(e) de pouvoir..."
+            ></textarea>
+            <div class="flex justify-between mt-1">
+              @if (lettreError) {
+                <p class="text-xs text-danger-600">{{ lettreError }}</p>
+              } @else {
+                <span></span>
+              }
+              <span
+                class="text-xs"
+                [class.text-danger-500]="lettreMotivation.length < 50"
+                [class.text-gray-400]="lettreMotivation.length >= 50"
+              >
+                {{ lettreMotivation.length }} / 50 min
+              </span>
+            </div>
+          </div>
+
+          <!-- Boutons -->
+          <div class="flex gap-3 pt-2 border-t border-gray-100">
+            <button (click)="fermerPostulation()" class="btn-secondary flex-1">Annuler</button>
+            <button
+              (click)="postuler()"
+              [disabled]="postulationLoading()"
+              class="btn-primary flex-1"
+            >
+              @if (postulationLoading()) {
+                <span class="flex items-center justify-center gap-2">
+                  <span
+                    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                  ></span>
+                  Envoi...
+                </span>
+              } @else {
+                Envoyer ma candidature
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

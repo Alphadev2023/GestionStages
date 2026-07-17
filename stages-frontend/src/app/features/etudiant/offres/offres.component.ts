@@ -1,165 +1,148 @@
 import { Component, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { DecimalPipe } from "@angular/common";
 import { SidebarComponent } from "../../../shared/components/sidebar/sidebar.component";
 import { NavbarComponent } from "../../../shared/components/navbar/navbar.component";
 import { OffreService } from "../../../core/services/offre.service";
 import { CandidatureService } from "../../../core/services/candidature.service";
+import { AuthService } from "../../../core/services/auth.service";
+import { ToastService } from "../../../core/services/toast.service";
 import { OffreResponse, Domaine } from "../../../core/models/offre.model";
 import { PageResponse } from "../../../core/models/api.model";
 
 @Component({
   selector: "app-offres",
   standalone: true,
-  imports: [FormsModule, SidebarComponent, NavbarComponent],
-  template: `
-    <app-sidebar />
-    <div class="ml-64 min-h-screen bg-gray-50">
-      <app-navbar title="Offres de stage" />
-      <main class="p-6">
-
-        <div class="card mb-6 flex flex-wrap gap-4">
-          <select [(ngModel)]="filtresDomaine" class="input-field w-48">
-            <option value="">Tous les domaines</option>
-            @for (d of domaines; track d) {
-              <option [value]="d">{{ d }}</option>
-            }
-          </select>
-          <input [(ngModel)]="filtresLocalisation" placeholder="Localisation..." class="input-field w-48" />
-          <input type="number" [(ngModel)]="filtresDuree" placeholder="Duree (mois)" class="input-field w-40" />
-          <button (click)="rechercher()" class="btn-primary">Rechercher</button>
-          <button (click)="reinitialiser()" class="btn-secondary">Reinitialiser</button>
-        </div>
-
-        @if (loading()) {
-          <div class="text-center py-12 text-gray-400">Chargement...</div>
-        } @else {
-          <div class="grid gap-4">
-            @for (offre of page()?.content; track offre.id) {
-              <div class="card hover:shadow-md transition-shadow">
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                      <h3 class="font-semibold text-gray-900 text-lg">{{ offre.titre }}</h3>
-                      <span class="badge-active">{{ offre.domaine }}</span>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-1">{{ offre.nomEntreprise }} — {{ offre.localisation }}</p>
-                    <p class="text-sm text-gray-500 mb-3 line-clamp-2">{{ offre.description }}</p>
-                    <div class="flex gap-4 text-xs text-gray-500">
-                      <span>Duree : {{ offre.dureeMois }} mois</span>
-                      @if (offre.remuneration) {
-                        <span>Remuneration : {{ offre.remuneration }} F/mois</span>
-                      }
-                      <span>Expire le {{ offre.dateExpiration.slice(0, 10) }}</span>
-                    </div>
-                  </div>
-                  <button (click)="ouvrirPostulation(offre)" class="btn-primary ml-4 shrink-0">Postuler</button>
-                </div>
-              </div>
-            }
-            @empty {
-              <div class="text-center py-12 text-gray-400">Aucune offre trouvee</div>
-            }
-          </div>
-
-          @if (page() && page()!.totalPages > 1) {
-            <div class="flex justify-center gap-2 mt-6">
-              <button (click)="changerPage(currentPage() - 1)" [disabled]="currentPage() === 0" class="btn-secondary px-3 py-1.5 text-sm">Precedent</button>
-              <span class="px-4 py-1.5 text-sm text-gray-600">Page {{ currentPage() + 1 }} / {{ page()!.totalPages }}</span>
-              <button (click)="changerPage(currentPage() + 1)" [disabled]="page()!.last" class="btn-secondary px-3 py-1.5 text-sm">Suivant</button>
-            </div>
-          }
-        }
-      </main>
-    </div>
-
-    @if (offreSelectionnee()) {
-      <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-          <h3 class="text-lg font-semibold mb-1">Postuler : {{ offreSelectionnee()!.titre }}</h3>
-          <p class="text-sm text-gray-500 mb-4">{{ offreSelectionnee()!.nomEntreprise }}</p>
-
-          @if (postulationError()) {
-            <div class="bg-danger-100 text-danger-700 rounded-lg p-3 mb-4 text-sm">{{ postulationError() }}</div>
-          }
-
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">CV (PDF)</label>
-              <input type="file" accept=".pdf" (change)="onCvChange($event)" class="input-field" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Lettre de motivation</label>
-              <textarea [(ngModel)]="lettreMotivation" rows="5" class="input-field resize-none"
-                placeholder="Redigez votre lettre de motivation..."></textarea>
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3 mt-6">
-            <button (click)="offreSelectionnee.set(null)" class="btn-secondary">Annuler</button>
-            <button (click)="postuler()" [disabled]="!cvFile() || postulationLoading()" class="btn-primary">
-              {{ postulationLoading() ? "Envoi..." : "Envoyer ma candidature" }}
-            </button>
-          </div>
-        </div>
-      </div>
-    }
-  `
+  imports: [FormsModule, DecimalPipe, SidebarComponent, NavbarComponent],
+  templateUrl: "./offres.component.html"
 })
 export class OffresComponent implements OnInit {
-  page                = signal<PageResponse<OffreResponse> | null>(null);
+  rawOffres           = signal<OffreResponse[]>([]);
   loading             = signal(false);
-  currentPage         = signal(0);
   filtresDomaine      = "";
   filtresLocalisation = "";
   filtresDuree?: number;
+  afficherTout        = false;
+  page                = 0;
+  size                = 6;
+
+  // Modal postulation
   offreSelectionnee   = signal<OffreResponse | null>(null);
   cvFile              = signal<File | null>(null);
   lettreMotivation    = "";
+  lettreError         = "";
+  cvError             = "";
   postulationLoading  = signal(false);
-  postulationError    = signal("");
 
   domaines: Domaine[] = [
     "INFORMATIQUE","FINANCE","MARKETING","RESSOURCES_HUMAINES",
     "GENIE_CIVIL","ELECTRONIQUE","SANTE","DROIT","COMMUNICATION","AUTRE"
   ];
 
-  constructor(private offreService: OffreService, private candidatureService: CandidatureService) {}
+  readonly DOMAINE_COLORS: Record<string, string> = {
+    INFORMATIQUE:"bg-blue-100 text-blue-700", FINANCE:"bg-green-100 text-green-700",
+    MARKETING:"bg-pink-100 text-pink-700", DROIT:"bg-purple-100 text-purple-700",
+    SANTE:"bg-red-100 text-red-700", GENIE_CIVIL:"bg-orange-100 text-orange-700",
+    ELECTRONIQUE:"bg-yellow-100 text-yellow-700", RESSOURCES_HUMAINES:"bg-teal-100 text-teal-700",
+    COMMUNICATION:"bg-indigo-100 text-indigo-700", AUTRE:"bg-gray-100 text-gray-700",
+  };
+
+  constructor(
+    private offreService: OffreService,
+    private candidatureService: CandidatureService,
+    public auth: AuthService,
+    private toast: ToastService
+  ) {}
 
   ngOnInit() { this.rechercher(); }
+
+  get filiereEtudiant(): string { return this.auth.user()?.filiere ?? ""; }
+
+  isRecommandee(domaine: string): boolean {
+    if (!this.filiereEtudiant) return false;
+    const f = this.filiereEtudiant.toLowerCase();
+    const d = domaine.toLowerCase();
+    return f.includes(d) || d.includes(f);
+  }
+
+  get offresAffichees(): OffreResponse[] {
+    const list = this.rawOffres();
+    if (!this.filiereEtudiant || this.afficherTout) return list;
+    const filtrees = list.filter(o => this.isRecommandee(o.domaine));
+    return filtrees.length > 0 ? filtrees : list;
+  }
+
+  get offresPage(): OffreResponse[] {
+    return this.offresAffichees.slice(this.page * this.size, (this.page + 1) * this.size);
+  }
+
+  get totalPages(): number { return Math.ceil(this.offresAffichees.length / this.size); }
+  get pagesArray(): number[] { return Array.from({ length: this.totalPages }, (_, i) => i); }
+
+  domaineClass(d: string): string { return this.DOMAINE_COLORS[d] ?? "bg-gray-100 text-gray-700"; }
 
   rechercher() {
     this.loading.set(true);
     const domaine = this.filtresDomaine as Domaine || undefined;
     this.offreService.rechercher(domaine, this.filtresLocalisation || undefined,
-      this.filtresDuree, this.currentPage()).subscribe({
-      next: res => { this.page.set(res.data); this.loading.set(false); },
+      this.filtresDuree, 0, 100).subscribe({
+      next: res => { this.rawOffres.set(res.data.content); this.page = 0; this.loading.set(false); },
       error: () => this.loading.set(false)
     });
   }
 
   reinitialiser() {
-    this.filtresDomaine = ""; this.filtresLocalisation = ""; this.filtresDuree = undefined;
-    this.currentPage.set(0); this.rechercher();
+    this.filtresDomaine = ""; this.filtresLocalisation = "";
+    this.filtresDuree = undefined; this.afficherTout = false;
+    this.page = 0; this.rechercher();
   }
 
-  changerPage(p: number) { this.currentPage.set(p); this.rechercher(); }
+  changerPage(p: number) { this.page = p; }
+  changerSize(s: number) { this.size = s; this.page = 0; }
 
   ouvrirPostulation(offre: OffreResponse) {
     this.offreSelectionnee.set(offre);
-    this.cvFile.set(null); this.lettreMotivation = ""; this.postulationError.set("");
+    this.cvFile.set(null); this.lettreMotivation = "";
+    this.lettreError = ""; this.cvError = "";
+    document.body.style.overflow = "hidden";
+  }
+
+  fermerPostulation() {
+    this.offreSelectionnee.set(null);
+    document.body.style.overflow = "";
   }
 
   onCvChange(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
-    if (file) this.cvFile.set(file);
+    if (file) { this.cvFile.set(file); this.cvError = ""; }
+  }
+
+  validerPostulation(): boolean {
+    this.cvError = ""; this.lettreError = "";
+    if (!this.cvFile()) this.cvError = "Veuillez selectionner votre CV en format PDF";
+    if (!this.lettreMotivation || this.lettreMotivation.length < 50)
+      this.lettreError = "La lettre doit contenir au moins 50 caracteres";
+    return !this.cvError && !this.lettreError;
   }
 
   postuler() {
-    if (!this.cvFile() || !this.offreSelectionnee()) return;
+    if (!this.validerPostulation() || !this.offreSelectionnee()) return;
     this.postulationLoading.set(true);
-    this.candidatureService.postuler(this.offreSelectionnee()!.id, this.lettreMotivation, this.cvFile()!).subscribe({
-      next: () => { this.offreSelectionnee.set(null); this.postulationLoading.set(false); },
-      error: err => { this.postulationError.set(err.error?.message ?? "Erreur"); this.postulationLoading.set(false); }
+    const id = this.toast.loading("Envoi de votre candidature...");
+    this.candidatureService.postuler(
+      this.offreSelectionnee()!.id, this.lettreMotivation, this.cvFile()!
+    ).subscribe({
+      next: () => {
+        this.toast.dismiss(id);
+        this.toast.success("Candidature envoyee ! Bonne chance !");
+        this.fermerPostulation();
+        this.postulationLoading.set(false);
+      },
+      error: err => {
+        this.toast.dismiss(id);
+        this.toast.error(err.error?.message ?? "Erreur lors de l envoi");
+        this.postulationLoading.set(false);
+      }
     });
   }
 }

@@ -1,102 +1,209 @@
 <app-sidebar />
 <div class="ml-64 min-h-screen bg-gray-50">
-  <app-navbar title="Conventions de stage" />
+  <app-navbar title="Conventions a valider" />
   <main class="p-6">
 
     <!-- Stats -->
     <div class="grid grid-cols-3 gap-4 mb-6">
-      <div class="card text-center py-4 border-l-4 border-warning-500">
-        <p class="text-2xl font-bold text-warning-600">{{ enAttente() }}</p>
+      <div (click)="setFiltre(undefined)"
+        class="card text-center py-4 border-l-4 border-gray-400 cursor-pointer hover:shadow-md transition-all"
+        [class.ring-2]="filtreStatut === undefined" [class.ring-primary-400]="filtreStatut === undefined">
+        <p class="text-2xl font-bold text-gray-700">{{ conventions().length }}</p>
+        <p class="text-xs text-gray-500 mt-1">Toutes</p>
+      </div>
+      <div (click)="setFiltre('EN_ATTENTE')"
+        class="card text-center py-4 border-l-4 border-warning-500 cursor-pointer hover:shadow-md transition-all"
+        [class.ring-2]="filtreStatut === 'EN_ATTENTE'" [class.ring-primary-400]="filtreStatut === 'EN_ATTENTE'">
+        <p class="text-2xl font-bold text-warning-600">{{ enAttente }}</p>
         <p class="text-xs text-gray-500 mt-1">En attente</p>
       </div>
-      <div class="card text-center py-4 border-l-4 border-success-500">
-        <p class="text-2xl font-bold text-success-600">{{ validees() }}</p>
+      <div (click)="setFiltre('VALIDEE_ENSEIGNANT')"
+        class="card text-center py-4 border-l-4 border-success-500 cursor-pointer hover:shadow-md transition-all"
+        [class.ring-2]="filtreStatut === 'VALIDEE_ENSEIGNANT'" [class.ring-primary-400]="filtreStatut === 'VALIDEE_ENSEIGNANT'">
+        <p class="text-2xl font-bold text-success-600">{{ validees }}</p>
         <p class="text-xs text-gray-500 mt-1">Validees</p>
       </div>
-      <div class="card text-center py-4 border-l-4 border-danger-500">
-        <p class="text-2xl font-bold text-danger-600">{{ rejetees() }}</p>
-        <p class="text-xs text-gray-500 mt-1">Rejetees</p>
+    </div>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-sm text-gray-500 font-medium">{{ conventions().length }} convention(s)</p>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500">Afficher</span>
+        <select [ngModel]="size" (ngModelChange)="changerSize($event)"
+          class="text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500">
+          <option [ngValue]="3">3 par page</option>
+          <option [ngValue]="6">6 par page</option>
+          <option [ngValue]="9">9 par page</option>
+        </select>
       </div>
     </div>
 
-    <!-- Filtres -->
-    <div class="card mb-6 flex gap-3">
-      @for (s of statuts; track s.label) {
-        <button (click)="setFiltre(s.value)"
-          [class]="filtreStatut === s.value ? buttonActif : buttonInactif">
-          {{ s.label }}
-        </button>
-      }
-    </div>
+    <!-- Grille 3 colonnes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (c of listePage; track c.id) {
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col">
 
-    <!-- Liste conventions -->
-    <div class="grid gap-4">
-      @for (conv of conventions(); track conv.id) {
-        <div class="card hover:shadow-md transition-shadow">
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-
-              <!-- En-tete etudiant -->
-              <div class="flex items-center gap-3 mb-3">
-                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                  {{ conv.nomEtudiant.charAt(0).toUpperCase() }}
+          <!-- Header card -->
+          <div class="p-4 border-b border-gray-100">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div class="flex items-center gap-2">
+                <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                  {{ c.nomEtudiant.charAt(0).toUpperCase() }}
                 </div>
                 <div>
-                  <p class="font-semibold text-gray-900">{{ conv.nomEtudiant }}</p>
-                  <p class="text-xs text-gray-500">{{ conv.titreOffre }}</p>
-                </div>
-                <span [class]="badgeClass(conv.statut)">{{ statutLabel(conv.statut) }}</span>
-              </div>
-
-              <!-- Details stage -->
-              <div class="grid grid-cols-3 gap-4 bg-gray-50 rounded-lg p-3 mb-3">
-                <div>
-                  <p class="text-xs text-gray-400">Entreprise</p>
-                  <p class="text-sm font-medium text-gray-700">{{ conv.nomEntreprise }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">Debut</p>
-                  <p class="text-sm font-medium text-gray-700">{{ conv.dateDebutStage.slice(0, 10) }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-gray-400">Fin</p>
-                  <p class="text-sm font-medium text-gray-700">{{ conv.dateFinStage.slice(0, 10) }}</p>
+                  <p class="font-semibold text-gray-900 text-sm">{{ c.nomEtudiant }}</p>
+                  <p class="text-xs text-gray-500 line-clamp-1">{{ c.titreOffre }}</p>
                 </div>
               </div>
-
-              @if (conv.commentaireEnseignant) {
-                <div class="bg-purple-50 rounded-lg p-3">
-                  <p class="text-xs font-medium text-purple-600 mb-1">Votre commentaire :</p>
-                  <p class="text-sm text-gray-700">{{ conv.commentaireEnseignant }}</p>
-                </div>
-              }
+              <span [class]="badgeClass(c.statut) + ' shrink-0 text-xs'">{{ statutLabel(c.statut) }}</span>
             </div>
+          </div>
 
-            <!-- Actions -->
-            @if (conv.statut === "EN_ATTENTE") {
-              <div class="flex flex-col gap-2 ml-6 shrink-0 min-w-40">
-                <textarea [(ngModel)]="commentaire" rows="2"
-                  placeholder="Commentaire (optionnel)..."
-                  class="input-field text-xs resize-none"></textarea>
-                <button (click)="valider(conv.id)"
-                  class="bg-success-600 hover:bg-success-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">
-                  Valider
-                </button>
-                <button (click)="rejeter(conv.id)"
-                  class="bg-danger-600 hover:bg-danger-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">
-                  Rejeter
-                </button>
+          <!-- Body card -->
+          <div class="p-4 flex-1 space-y-2 text-xs text-gray-600">
+            <div class="flex justify-between">
+              <span class="text-gray-400">Entreprise</span>
+              <span class="font-medium">{{ c.nomEntreprise }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Debut</span>
+              <span class="font-medium">{{ c.dateDebutStage.slice(0, 10) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-400">Fin</span>
+              <span class="font-medium">{{ c.dateFinStage.slice(0, 10) }}</span>
+            </div>
+            @if (c.commentaireEnseignant) {
+              <div class="p-2 bg-blue-50 rounded-lg mt-2">
+                <p class="text-xs text-blue-700 line-clamp-2">{{ c.commentaireEnseignant }}</p>
               </div>
             }
           </div>
+
+          <!-- Footer card -->
+          @if (c.statut === "EN_ATTENTE") {
+            <div class="p-3 border-t border-gray-100 flex gap-2">
+              <button (click)="ouvrirConfirmation(c, 'VALIDER')"
+                class="flex-1 text-xs py-1.5 rounded-lg bg-success-600 hover:bg-success-700 text-white font-medium transition-colors">
+                Valider
+              </button>
+              <button (click)="ouvrirConfirmation(c, 'REJETER')"
+                class="flex-1 text-xs py-1.5 rounded-lg bg-danger-600 hover:bg-danger-700 text-white font-medium transition-colors">
+                Rejeter
+              </button>
+            </div>
+          }
+          @if (c.statut !== "EN_ATTENTE") {
+            <div class="p-3 border-t border-gray-100 text-center">
+              <p class="text-xs text-gray-400">{{ statutLabel(c.statut) }}</p>
+            </div>
+          }
         </div>
       }
+
       @empty {
-        <div class="card text-center py-16">
+        <div class="col-span-3 text-center py-16 bg-white rounded-xl border border-gray-200">
           <p class="text-gray-400 text-lg font-medium">Aucune convention</p>
-          <p class="text-gray-400 text-sm mt-1">Aucune convention ne vous est assignee pour le moment</p>
+          <p class="text-gray-400 text-sm mt-1">Les conventions vous seront assignees automatiquement</p>
         </div>
       }
     </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1) {
+      <div class="flex items-center justify-between mt-6 px-1">
+        <p class="text-sm text-gray-500">Page {{ page + 1 }} sur {{ totalPages }}</p>
+        <div class="flex items-center gap-2">
+          <button [disabled]="page === 0" (click)="changerPage(page - 1)"
+            class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+            Precedent
+          </button>
+          <div class="flex gap-1">
+            @for (p of pagesArray; track p) {
+              <button (click)="changerPage(p)"
+                [class]="p === page ? 'w-8 h-8 text-sm rounded-lg bg-primary-600 text-white font-bold' : 'w-8 h-8 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-600'">
+                {{ p + 1 }}
+              </button>
+            }
+          </div>
+          <button [disabled]="page >= totalPages - 1" (click)="changerPage(page + 1)"
+            class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+            Suivant
+          </button>
+        </div>
+      </div>
+    }
   </main>
 </div>
+
+<!-- Modal confirmation -->
+@if (conventionSelectionnee()) {
+  <div class="fixed inset-0 bg-black/50 z-40" (click)="fermerConfirmation()"></div>
+  <div class="fixed inset-0 z-50 overflow-y-auto pointer-events-none">
+    <div class="min-h-full flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto" (click)="$event.stopPropagation()">
+
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 class="text-lg font-semibold text-gray-900">
+            {{ actionSelectionnee === "VALIDER" ? "Valider la convention" : "Rejeter la convention" }}
+          </h2>
+          <button (click)="fermerConfirmation()"
+            class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 text-lg font-bold">
+            x
+          </button>
+        </div>
+
+        <div class="px-6 py-5 space-y-4">
+          <div class="p-3 bg-gray-50 rounded-xl border border-gray-200">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                {{ conventionSelectionnee()!.nomEtudiant.charAt(0).toUpperCase() }}
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900 text-sm">{{ conventionSelectionnee()!.nomEtudiant }}</p>
+                <p class="text-xs text-gray-500">{{ conventionSelectionnee()!.titreOffre }}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+              <span>Entreprise : <strong>{{ conventionSelectionnee()!.nomEntreprise }}</strong></span>
+              <span>Debut : <strong>{{ conventionSelectionnee()!.dateDebutStage.slice(0, 10) }}</strong></span>
+            </div>
+          </div>
+
+          @if (actionSelectionnee === "VALIDER") {
+            <div class="p-3 bg-success-50 rounded-lg border border-success-200">
+              <p class="text-sm text-success-700 font-medium">Vous confirmez que cette convention est conforme.</p>
+            </div>
+          }
+          @if (actionSelectionnee === "REJETER") {
+            <div class="p-3 bg-danger-50 rounded-lg border border-danger-200">
+              <p class="text-sm text-danger-700 font-medium">Cette convention sera rejetee. Precisez les raisons.</p>
+            </div>
+          }
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Commentaire
+              @if (actionSelectionnee === "REJETER") { <span class="text-danger-600">*</span> }
+              @if (actionSelectionnee === "VALIDER") { <span class="text-gray-400 text-xs ml-1">(optionnel)</span> }
+            </label>
+            <textarea [(ngModel)]="commentaire" rows="3" class="input-field resize-none"
+              [placeholder]="actionSelectionnee === 'VALIDER'
+                ? 'Ex: Convention conforme aux exigences academiques...'
+                : 'Ex: Dossier incomplet, veuillez fournir les pieces manquantes...'">
+            </textarea>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button (click)="fermerConfirmation()" class="btn-secondary flex-1">Annuler</button>
+            <button (click)="confirmer()"
+              [class]="actionSelectionnee === 'VALIDER' ? 'btn-success flex-1' : 'btn-danger flex-1'">
+              {{ actionSelectionnee === "VALIDER" ? "Confirmer la validation" : "Confirmer le rejet" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

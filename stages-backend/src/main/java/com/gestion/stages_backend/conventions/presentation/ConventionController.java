@@ -6,7 +6,6 @@ import com.gestion.stages_backend.conventions.application.service.ConventionServ
 import com.gestion.stages_backend.conventions.domain.model.StatutConvention;
 import com.gestion.stages_backend.shared.application.dto.ApiResponse;
 import com.gestion.stages_backend.shared.application.dto.PageResponse;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,28 +13,48 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/conventions")
 @RequiredArgsConstructor
-@Tag(name = "Conventions de stage", description = "Workflow de validation des conventions")
+@Tag(name = "Conventions de stage")
 public class ConventionController {
 
     private final ConventionService conventionService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ENSEIGNANT')")
-    @Operation(summary = "Créer une convention suite à une candidature acceptée")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT')")
     public ResponseEntity<ApiResponse<ConventionResponse>> creer(
             @Valid @RequestBody ConventionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok("Convention créée", conventionService.creer(request)));
+                .body(ApiResponse.ok("Convention creee", conventionService.creer(request)));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT')")
+    public ResponseEntity<ApiResponse<PageResponse<ConventionResponse>>> liste(
+            @RequestParam(required = false) StatutConvention statut,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        boolean isAdmin = SecurityContextHolder.getContext().getAuthentication()
+                .getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        PageResponse<ConventionResponse> result;
+        if (isAdmin) {
+            result = conventionService.findByStatut(statut, PageRequest.of(page, size));
+        } else {
+            result = conventionService.findByEnseignant(email, statut, PageRequest.of(page, size));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @PatchMapping("/valider/{id}/enseignant")
     @PreAuthorize("hasRole('ENSEIGNANT')")
-    @Operation(summary = "Validation enseignant")
     public ResponseEntity<ApiResponse<ConventionResponse>> validerEnseignant(
             @PathVariable Long id,
             @RequestParam(required = false) String commentaire) {
@@ -45,7 +64,6 @@ public class ConventionController {
 
     @PatchMapping("/valider/{id}/admin")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Approbation admin")
     public ResponseEntity<ApiResponse<ConventionResponse>> approuverAdmin(
             @PathVariable Long id,
             @RequestParam(required = false) String commentaire) {
@@ -54,23 +72,11 @@ public class ConventionController {
     }
 
     @PatchMapping("/{id}/rejeter")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ENSEIGNANT')")
-    @Operation(summary = "Rejeter une convention")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT')")
     public ResponseEntity<ApiResponse<ConventionResponse>> rejeter(
             @PathVariable Long id,
             @RequestParam(required = false) String commentaire) {
         return ResponseEntity.ok(ApiResponse.ok(
                 conventionService.rejeter(id, commentaire)));
-    }
-
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ENSEIGNANT')")
-    @Operation(summary = "Liste des conventions par statut")
-    public ResponseEntity<ApiResponse<PageResponse<ConventionResponse>>> liste(
-            @RequestParam(required = false) StatutConvention statut,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(ApiResponse.ok(
-                conventionService.findByStatut(statut, PageRequest.of(page, size))));
     }
 }
