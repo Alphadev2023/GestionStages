@@ -2,15 +2,20 @@
 <div class="ml-64 min-h-screen bg-gray-50">
   <app-navbar title="Tableau de bord" />
   <main class="p-6">
-
-    <div class="card mb-6 bg-gradient-to-r from-primary-600 to-primary-800 text-white border-0">
+    <div class="card mb-6 bg-gradient-to-r from-primary-600 to-primary-500 text-white border-0">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-xl font-bold mb-1">Bonjour, {{ auth.user()?.prenom }} {{ auth.user()?.nom }}</h2>
-          <p class="text-primary-100 text-sm">{{ auth.user()?.filiere ?? "Etudiant" }} — {{ auth.user()?.promotion ?? "" }}</p>
+          <h2 class="text-xl font-bold mb-1">
+            Bonjour, {{ auth.user()?.prenom }} {{ auth.user()?.nom }}
+          </h2>
+          <p class="text-primary-100 text-sm">
+            {{ auth.user()?.filiere ?? 'Etudiant' }} — {{ auth.user()?.promotion ?? '' }}
+          </p>
           <p class="text-primary-200 text-xs mt-1">{{ auth.user()?.email }}</p>
         </div>
-        <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
+        <div
+          class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold"
+        >
           {{ initiales() }}
         </div>
       </div>
@@ -25,7 +30,10 @@
           </div>
         </div>
         <p class="text-3xl font-bold text-primary-600">{{ totalOffres() }}</p>
-        <a routerLink="/etudiant/offres" class="text-xs text-primary-500 hover:underline mt-2 block">
+        <a
+          routerLink="/etudiant/offres"
+          class="text-xs text-primary-500 hover:underline mt-2 block"
+        >
           Voir toutes les offres
         </a>
       </div>
@@ -54,9 +62,11 @@
         </div>
         <p class="text-3xl font-bold text-success-600">{{ tauxReussite() }}%</p>
         <div class="h-2 bg-gray-100 rounded-full mt-3 overflow-hidden">
-          <div class="h-full rounded-full transition-all duration-700"
-            style="background-color: #16a34a;"
-            [style.width]="barreWidth()"></div>
+          <div
+            class="h-full rounded-full transition-all duration-700"
+            style="background-color: #16a34a"
+            [style.width]="barreWidth()"
+          ></div>
         </div>
       </div>
     </div>
@@ -65,14 +75,18 @@
       <div class="card mb-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-semibold text-gray-900">Mes dernieres candidatures</h3>
-          <a routerLink="/etudiant/candidatures" class="text-xs text-primary-600 hover:underline">Voir tout</a>
+          <a routerLink="/etudiant/candidatures" class="text-xs text-primary-600 hover:underline"
+            >Voir tout</a
+          >
         </div>
         <div class="space-y-3">
           @for (c of dernieresCandidatures(); track c.id) {
             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div>
                 <p class="text-sm font-medium text-gray-900">{{ c.titreOffre }}</p>
-                <p class="text-xs text-gray-500">{{ c.nomEntreprise }} — {{ c.createdAt.slice(0, 10) }}</p>
+                <p class="text-xs text-gray-500">
+                  {{ c.nomEntreprise }} — {{ c.createdAt.slice(0, 10) }}
+                </p>
               </div>
               <span [class]="getBadge(c.statut)">{{ getStatutLabel(c.statut) }}</span>
             </div>
@@ -82,8 +96,10 @@
     }
 
     <div class="grid grid-cols-2 gap-4">
-      <a routerLink="/etudiant/offres"
-        class="card flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-primary-500">
+      <a
+        routerLink="/etudiant/offres"
+        class="card flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-primary-500"
+      >
         <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
           <span class="text-primary-600 font-bold text-sm">OF</span>
         </div>
@@ -92,8 +108,10 @@
           <p class="text-xs text-gray-500">{{ totalOffres() }} offre(s) disponible(s)</p>
         </div>
       </a>
-      <a routerLink="/messagerie"
-        class="card flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-green-500">
+      <a
+        routerLink="/messagerie"
+        class="card flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-green-500"
+      >
         <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
           <span class="text-green-600 font-bold text-sm">MS</span>
         </div>

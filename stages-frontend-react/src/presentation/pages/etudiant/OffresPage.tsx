@@ -144,11 +144,7 @@ export function OffresPage() {
                   setPage(0);
                 }}
                 className="text-sm text-primary-600 hover:underline"
-              >
-                {afficherTout
-                  ? "Voir seulement mon domaine (" + filiereEtudiant + ")"
-                  : "Voir toutes les offres"}
-              </button>
+              ></button>
             )}
           </Card>
 

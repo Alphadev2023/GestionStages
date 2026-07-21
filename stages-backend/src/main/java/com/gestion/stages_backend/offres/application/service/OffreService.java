@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class OffreService {
 
     private final JpaOffreRepository offreRepository;
-    private final JpaUserRepository userRepository;
-    private final OffreMapper offreMapper;
+    private final JpaUserRepository  userRepository;
+    private final OffreMapper         offreMapper;
 
     @Transactional
     public OffreResponse publier(OffreRequest request) {
