@@ -14,8 +14,8 @@ import {
   usePublierOffre,
   useArchiverOffre,
 } from "../../../application/offres/usePublierOffre";
-import { getErrorMessage } from "../../../shared/errors";
 import type { Domaine, OffreRequest } from "../../../domain";
+import axios from "axios";
 
 const DOMAINES: Domaine[] = [
   "INFORMATIQUE",
@@ -346,11 +346,12 @@ export function OffresPage() {
                 resetForm();
                 setPage(0);
               },
-              onError: (e) => {
+              onError: (e: unknown) => {
                 toast.dismiss(id);
-                toast.error(
-                  getErrorMessage(e, "Erreur lors de la publication"),
-                );
+                const message = axios.isAxiosError(e)
+                  ? (e.response?.data?.message ?? "Erreur lors de l envoi")
+                  : "Erreur lors de l envoi";
+                toast.error(message);
                 setSubmitting(false);
               },
             });

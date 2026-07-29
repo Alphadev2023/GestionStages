@@ -1,5 +1,4 @@
-import { getErrorMessage } from '../../../shared/errors';
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Sidebar } from '../../components/Sidebar';
 import { Navbar } from '../../components/Navbar';
@@ -188,7 +187,7 @@ export function ConventionsPage() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6 px-1">
-                  <p className="text-sm text-gray-500">Page {page+1} sur {totalPages} — {list.length} conventions</p>
+                  <p className="text-sm text-gray-500">Page {page+1} sur {totalPages} â€” {list.length} conventions</p>
                   <div className="flex items-center gap-2">
                     <button disabled={page===0} onClick={()=>setPage(p=>p-1)}
                       className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">

@@ -1,4 +1,5 @@
-import { useState } from "react";
+﻿import { useState } from "react";
+import axios from "axios";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
@@ -259,7 +260,7 @@ export function OffresPage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6 px-1">
                   <p className="text-sm text-gray-500">
-                    Page {page + 1} sur {totalPages} — {offresAffichees.length}{" "}
+                    Page {page + 1} sur {totalPages} â€” {offresAffichees.length}{" "}
                     offres
                   </p>
                   <div className="flex items-center gap-2">
@@ -321,7 +322,7 @@ export function OffresPage() {
                   {offre.nomEntreprise}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {offre.localisation} — {offre.dureeMois} mois
+                  {offre.localisation} â€” {offre.dureeMois} mois
                 </p>
               </div>
               <span
@@ -355,9 +356,10 @@ export function OffresPage() {
                     },
                     onError: (e: unknown) => {
                       toast.dismiss(id);
-                      toast.error(
-                        e.response?.data?.message ?? "Erreur lors de l envoi",
-                      );
+                      const message = axios.isAxiosError(e)
+                        ? (e.response?.data?.message ?? "Erreur lors de l envoi")
+                        : "Erreur lors de l envoi";
+                      toast.error(message);
                       setSubmitting(false);
                     },
                   },
@@ -409,7 +411,7 @@ export function OffresPage() {
                               Cliquez pour selectionner votre CV
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
-                              Format PDF uniquement — max 10MB
+                              Format PDF uniquement â€” max 10MB
                             </p>
                           </>
                         )}
@@ -495,3 +497,4 @@ export function OffresPage() {
     </>
   );
 }
+

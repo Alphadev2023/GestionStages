@@ -1,38 +1,45 @@
-import { NavLink } from 'react-router-dom';
-import { useAuthStore } from '../../application/auth/useAuthStore';
-import type { Role } from '../../domain';
+import { NavLink } from "react-router-dom";
+import { useAuthStore } from "../../application/auth/useAuthStore";
+import { useMessagerieStore } from "../../application/messagerie/useMessagerieStore";
+import type { Role } from "../../domain";
 
-interface NavItem { label: string; path: string; }
+interface NavItem {
+  label: string;
+  path: string;
+}
 
 const NAV: Record<Role, NavItem[]> = {
   ETUDIANT: [
-    { label:'Tableau de bord',  path:'/etudiant/dashboard' },
-    { label:'Offres de stage',  path:'/etudiant/offres' },
-    { label:'Mes candidatures', path:'/etudiant/candidatures' },
-    { label:'Messagerie',       path:'/messagerie' },
+    { label: "Tableau de bord", path: "/etudiant/dashboard" },
+    { label: "Offres de stage", path: "/etudiant/offres" },
+    { label: "Mes candidatures", path: "/etudiant/candidatures" },
+    { label: "Messagerie", path: "/messagerie" },
   ],
   ENTREPRISE: [
-    { label:'Tableau de bord', path:'/entreprise/dashboard' },
-    { label:'Mes offres',       path:'/entreprise/offres' },
-    { label:'Candidatures',     path:'/entreprise/candidatures' },
-    { label:'Messagerie',       path:'/messagerie' },
+    { label: "Tableau de bord", path: "/entreprise/dashboard" },
+    { label: "Mes offres", path: "/entreprise/offres" },
+    { label: "Candidatures", path: "/entreprise/candidatures" },
+    { label: "Messagerie", path: "/messagerie" },
   ],
   ENSEIGNANT: [
-    { label:'Tableau de bord', path:'/enseignant/dashboard' },
-    { label:'Conventions',      path:'/enseignant/conventions' },
-    { label:'Messagerie',       path:'/messagerie' },
+    { label: "Tableau de bord", path: "/enseignant/dashboard" },
+    { label: "Conventions", path: "/enseignant/conventions" },
+    { label: "Messagerie", path: "/messagerie" },
   ],
   ADMIN: [
-    { label:'Tableau de bord', path:'/admin/dashboard' },
-    { label:'Utilisateurs',    path:'/admin/utilisateurs' },
-    { label:'Reporting',       path:'/admin/reporting' },
+    { label: "Tableau de bord", path: "/admin/dashboard" },
+    { label: "Utilisateurs", path: "/admin/utilisateurs" },
+    { label: "Reporting", path: "/admin/reporting" },
   ],
 };
 
 export function Sidebar() {
   const { user, role, clearSession } = useAuthStore();
+  const nonLus = useMessagerieStore((s) => s.nonLus);
+  const totalNonLus = Object.values(nonLus).reduce((a, b) => a + b, 0);
+
   const items = role ? NAV[role] : [];
-  const initiales = user ? (user.prenom[0]+user.nom[0]).toUpperCase() : '?';
+  const initiales = user ? (user.prenom[0] + user.nom[0]).toUpperCase() : "?";
 
   return (
     <aside className="fixed inset-y-0 left-0 w-64 bg-sidebar text-white flex flex-col z-50">
@@ -42,16 +49,23 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {items.map(item => (
+        {items.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              'flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ' +
-              (isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/10')
+              "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors " +
+              (isActive
+                ? "bg-white/10 text-white"
+                : "text-white/70 hover:text-white hover:bg-white/10")
             }
           >
-            {item.label}
+            <span>{item.label}</span>
+            {item.path === "/messagerie" && totalNonLus > 0 && (
+              <span className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center font-bold">
+                {totalNonLus}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -62,7 +76,9 @@ export function Sidebar() {
             {initiales}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user?.prenom} {user?.nom}</p>
+            <p className="text-sm font-medium truncate">
+              {user?.prenom} {user?.nom}
+            </p>
             <p className="text-xs text-white/50 truncate">{user?.email}</p>
           </div>
         </div>

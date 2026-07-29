@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { Sidebar } from "../../components/Sidebar";
 import { Navbar } from "../../components/Navbar";
 import { Card } from "../../components/ui/Card";
 import { useStatistiques } from "../../../application/reporting/useReporting";
 import { useAllUsers } from "../../../application/users/useUsers";
-import type { User } from "../../../domain";
+import type { Contact } from "../../../domain";
 
 export function DashboardPage() {
   const { data: stats } = useStatistiques();
@@ -20,7 +20,7 @@ export function DashboardPage() {
 
   const rolesStats = ROLES.map((r) => ({
     role: r,
-    count: (users ?? []).filter((u: User) => u.role === r).length,
+    count: (users ?? []).filter((u: Contact) => u.role === r).length,
     color: COLORS[r],
   }));
 
@@ -168,3 +168,4 @@ export function DashboardPage() {
     </>
   );
 }
+

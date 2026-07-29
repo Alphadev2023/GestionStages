@@ -1,5 +1,5 @@
-import apiClient from './apiClient';
-import type { ApiResponse, PageResponse, Convention, StatutConvention } from '../domain';
+﻿import apiClient from './apiClient';
+import type { ApiResponse, PageResponse, Convention } from '../domain';
 
 export const conventionService = {
   liste: (params?: Record<string,unknown>) =>
