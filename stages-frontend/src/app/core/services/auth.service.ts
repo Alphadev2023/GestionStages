@@ -10,7 +10,7 @@ const USER_KEY  = "stages_user";
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
-  private readonly api = "http://localhost:8082/api/auth";
+  private readonly api = "/api/auth";
 
   private _user = signal<AuthResponse | null>(this.loadUser());
   readonly user   = this._user.asReadonly();

@@ -9,17 +9,16 @@ import { Subject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class MessagerieService {
-  private api = 'http://localhost:8082/api/messages';
+  private api = '/api/messages';
 
   messages = signal<MessageResponse[]>([]);
   messageRecu$ = new Subject<MessageResponse>();
 
-  // NOUVEAU : suivi global des messages non lus
-  private messagesNonLus = signal<MessageResponse[]>([]);
-  totalNonLus = computed(() => this.messagesNonLus().length);
+  private nonLusParExpediteur = signal<Record<number, number>>({});
+  totalNonLus = computed(() =>
+    Object.values(this.nonLusParExpediteur()).reduce((a, b) => a + b, 0),
+  );
 
-  // NOUVEAU : id du contact dont la conversation est actuellement ouverte
-  // (si l'utilisateur regarde déjà cette conversation, pas besoin de la compter comme "non lue")
   conversationActiveId = signal<number | null>(null);
 
   private stompClient: Client | null = null;
@@ -31,20 +30,25 @@ export class MessagerieService {
   ) {}
 
   connect() {
-    if (this.connected) return; // évite les connexions multiples
+    if (this.connected) return;
+
+    this.chargerNonLus();
+
     this.stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8082/ws') as WebSocket,
+      webSocketFactory: () => new SockJS('/ws') as WebSocket,
       connectHeaders: { Authorization: `Bearer ${this.auth.getToken()}` },
       onConnect: () => {
         this.connected = true;
         this.stompClient!.subscribe('/user/queue/messages', (msg) => {
           const m: MessageResponse = JSON.parse(msg.body);
-          this.messages.update((prev) => [...prev, m]);
 
-          // Compte comme non lu seulement si l'utilisateur n'est PAS déjà
-          // en train de regarder la conversation avec cet expéditeur
-          if (this.conversationActiveId() !== m.expediteurId) {
-            this.messagesNonLus.update((prev) => [...prev, m]);
+          if (this.conversationActiveId() === m.expediteurId) {
+            this.messages.update((prev) => [...prev, m]);
+          } else {
+            this.nonLusParExpediteur.update((prev) => ({
+              ...prev,
+              [m.expediteurId]: (prev[m.expediteurId] ?? 0) + 1,
+            }));
           }
 
           this.messageRecu$.next(m);
@@ -55,19 +59,35 @@ export class MessagerieService {
       },
       reconnectDelay: 5000,
     });
+
     this.stompClient.activate();
   }
 
   disconnect() {
     this.stompClient?.deactivate();
+    this.stompClient = null;
     this.connected = false;
     this.messages.set([]);
-    this.messagesNonLus.set([]);
+    this.nonLusParExpediteur.set({});
+    this.conversationActiveId.set(null);
   }
 
-  // Marque les messages d'un expéditeur donné comme lus (appelé à l'ouverture de sa conversation)
+  chargerNonLus() {
+    this.http.get<ApiResponse<Record<number, number>>>(`${this.api}/non-lus`).subscribe({
+      next: (res) => this.nonLusParExpediteur.set(res.data ?? {}),
+      error: () => {},
+    });
+  }
+
+  nonLusPour(expediteurId: number): number {
+    return this.nonLusParExpediteur()[expediteurId] ?? 0;
+  }
+
   marquerCommeLu(expediteurId: number) {
-    this.messagesNonLus.update((list) => list.filter((m) => m.expediteurId !== expediteurId));
+    this.nonLusParExpediteur.update((prev) => ({ ...prev, [expediteurId]: 0 }));
+    this.http
+      .patch<ApiResponse<void>>(`${this.api}/lu/${expediteurId}`, {})
+      .subscribe({ error: () => {} });
   }
 
   envoyer(req: MessageRequest) {

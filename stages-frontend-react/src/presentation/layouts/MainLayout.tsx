@@ -1,8 +1,11 @@
-import { Outlet } from 'react-router-dom';
-import { Sidebar } from '../components/Sidebar';
-import { Navbar } from '../components/Navbar';
+import { Outlet } from "react-router-dom";
+import { Sidebar } from "../components/Sidebar";
+import { Navbar } from "../components/Navbar";
+import { useMessagerieConnection } from "../../application/messagerie/useMessagerieConnection";
 
 export function MainLayout({ title }: { title: string }) {
+  useMessagerieConnection();
+
   return (
     <>
       <Sidebar />

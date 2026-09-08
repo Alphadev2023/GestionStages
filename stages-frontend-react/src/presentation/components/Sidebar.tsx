@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useAuthStore } from "../../application/auth/useAuthStore";
 import { useMessagerieStore } from "../../application/messagerie/useMessagerieStore";
+import { useMessagerieConnection } from "../../application/messagerie/useMessagerieConnection";
 import type { Role } from "../../domain";
 
 interface NavItem {
@@ -34,10 +35,11 @@ const NAV: Record<Role, NavItem[]> = {
 };
 
 export function Sidebar() {
+  useMessagerieConnection();
+
   const { user, role, clearSession } = useAuthStore();
   const nonLus = useMessagerieStore((s) => s.nonLus);
   const totalNonLus = Object.values(nonLus).reduce((a, b) => a + b, 0);
-
   const items = role ? NAV[role] : [];
   const initiales = user ? (user.prenom[0] + user.nom[0]).toUpperCase() : "?";
 
@@ -63,7 +65,7 @@ export function Sidebar() {
             <span>{item.label}</span>
             {item.path === "/messagerie" && totalNonLus > 0 && (
               <span className="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center font-bold">
-                {totalNonLus}
+                {totalNonLus > 99 ? "99+" : totalNonLus}
               </span>
             )}
           </NavLink>

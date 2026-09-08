@@ -11,6 +11,7 @@ interface MessagerieState {
   setMessages: (m: Message[]) => void;
   addMessage: (m: Message) => void;
   nonLus: Record<number, number>;
+  setNonLus: (n: Record<number, number>) => void;
   incrementNonLus: (id: number) => void;
   resetNonLus: (id: number) => void;
   totalNonLus: () => number;
@@ -29,12 +30,18 @@ export const useMessagerieStore = create<MessagerieState>((set, get) => ({
   setMessages: (m) => set({ messages: m }),
 
   addMessage: (m) => {
-    set((s) => ({ messages: [...s.messages, m] }));
     const contactActif = get().contactActif;
-    if (!contactActif || m.expediteurId !== contactActif.id) {
+    const estConversationOuverte =
+      contactActif && m.expediteurId === contactActif.id;
+
+    if (estConversationOuverte) {
+      set((s) => ({ messages: [...s.messages, m] }));
+    } else {
       get().incrementNonLus(m.expediteurId);
     }
   },
+
+  setNonLus: (n) => set({ nonLus: n }),
 
   incrementNonLus: (id) =>
     set((s) => ({

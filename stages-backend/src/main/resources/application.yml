@@ -55,14 +55,13 @@ jwt:
 
 storage:
   local:
-    path: uploads
-    url: http://localhost:8082/files
+    path: ${STORAGE_PATH:uploads}
+    url: ${STORAGE_URL:http://localhost:8082/files}
 
 minio:
-  url: http://localhost:9000
+  url: ${MINIO_URL:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
-  bucket: stages-documents
 
 springdoc:
   api-docs:

@@ -25,7 +25,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("http://localhost:4200", "http://localhost:5173")
+                .setAllowedOriginPatterns(
+                        "http://localhost",
+                        "http://localhost:81",
+                        "http://localhost:4200",
+                        "http://localhost:5173"
+                )
                 .withSockJS();
     }
 

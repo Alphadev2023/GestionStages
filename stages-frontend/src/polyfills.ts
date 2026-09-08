@@ -1,2 +1,2 @@
-ï»¿// Polyfill nÃ©cessaire pour sockjs-client, qui rÃ©fÃ©rence l'objet Node "global"
+// Polyfill nécessaire pour sockjs-client, qui référence l'objet Node "global"
 (window as any).global = window;

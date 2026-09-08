@@ -5,7 +5,7 @@ import { OffreRequest, OffreResponse, Domaine } from "../models/offre.model";
 
 @Injectable({ providedIn: "root" })
 export class OffreService {
-  private api = "http://localhost:8082/api/offres";
+  private api = "/api/offres";
   constructor(private http: HttpClient) {}
 
   rechercher(domaine?: Domaine, localisation?: string, dureeMois?: number, page = 0, size = 10) {

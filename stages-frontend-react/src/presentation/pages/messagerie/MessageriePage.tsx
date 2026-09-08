@@ -41,10 +41,12 @@ export function MessageriePage() {
   }, [contacts, setContacts]);
 
   // Charger conversation quand contact change
+  // Charger conversation quand contact change
   useEffect(() => {
     const id = contactActif?.id;
     if (!id) return;
     resetNonLus(id);
+    messagerieService.marquerLu(id).catch(() => {});
     messagerieService
       .getConversation(id, { size: 50 })
       .then((r) => setMessages(r.data.data.content));
@@ -59,7 +61,6 @@ export function MessageriePage() {
 
   function selectionnerContact(c: Contact) {
     setContactActif(c);
-    resetNonLus(c.id);
   }
 
   async function envoyer() {

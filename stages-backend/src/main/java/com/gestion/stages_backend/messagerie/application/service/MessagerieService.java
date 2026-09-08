@@ -15,6 +15,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class MessagerieService {
@@ -25,9 +29,7 @@ public class MessagerieService {
 
     @Transactional
     public MessageResponse envoyer(MessageRequest request) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User expediteur = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Expéditeur introuvable"));
+        User expediteur = getUtilisateurCourant();
         User destinataire = userRepository.findById(request.getDestinataireId())
                 .orElseThrow(() -> new ResourceNotFoundException("Destinataire", request.getDestinataireId()));
 
@@ -40,21 +42,49 @@ public class MessagerieService {
 
         MessageResponse response = toResponse(messageRepository.save(message));
 
-        // Envoi WebSocket au destinataire
         messagingTemplate.convertAndSendToUser(
                 destinataire.getEmail(), "/queue/messages", response);
+
+        long total = messageRepository.countByDestinataireIdAndLuFalse(destinataire.getId());
+        Map<String, Object> notif = new HashMap<>();
+        notif.put("expediteurId", expediteur.getId());
+        notif.put("nomExpediteur", expediteur.getPrenom() + " " + expediteur.getNom());
+        notif.put("totalNonLus", total);
+        messagingTemplate.convertAndSendToUser(
+                destinataire.getEmail(), "/queue/notifications", notif);
 
         return response;
     }
 
     @Transactional(readOnly = true)
     public PageResponse<MessageResponse> getConversation(Long autreUserId, Pageable pageable) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User moi = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
+        User moi = getUtilisateurCourant();
         return PageResponse.of(
                 messageRepository.findConversation(moi.getId(), autreUserId, pageable)
                         .map(this::toResponse));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, Long> getNonLus() {
+        User moi = getUtilisateurCourant();
+        List<Object[]> rows = messageRepository.countNonLusParExpediteur(moi.getId());
+        Map<Long, Long> resultat = new HashMap<>();
+        for (Object[] row : rows) {
+            resultat.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
+        return resultat;
+    }
+
+    @Transactional
+    public void marquerLu(Long autreUserId) {
+        User moi = getUtilisateurCourant();
+        messageRepository.marquerCommeLus(moi.getId(), autreUserId);
+    }
+
+    private User getUtilisateurCourant() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
     }
 
     private MessageResponse toResponse(Message m) {

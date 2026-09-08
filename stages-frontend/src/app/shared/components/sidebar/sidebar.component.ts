@@ -1,8 +1,7 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { MessagerieService } from '../../../core/services/messagerie.service';
-import { Role } from '../../../core/models/auth.model';
 
 interface NavItem {
   label: string;
@@ -13,59 +12,22 @@ interface NavItem {
   selector: 'app-sidebar',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
-  template: `
-    <aside class="fixed inset-y-0 left-0 w-64 bg-sidebar text-white flex flex-col z-50">
-      <div class="px-6 py-5 border-b border-white/10">
-        <h1 class="text-lg font-bold tracking-tight">GestionStages</h1>
-        <p class="text-xs text-white/50 mt-0.5">{{ auth.user()?.role }}</p>
-      </div>
-
-      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        @for (item of navItems(); track item.path) {
-          <a
-            [routerLink]="item.path"
-            routerLinkActive="bg-white/10"
-            class="flex items-center justify-between px-3 py-2.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors text-sm font-medium"
-          >
-            <span>{{ item.label }}</span>
-            @if (item.path === '/messagerie' && messagerie.totalNonLus() > 0) {
-              <span
-                class="bg-red-500 text-white text-xs rounded-full min-w-5 h-5 px-1.5 flex items-center justify-center font-bold"
-              >
-                {{ messagerie.totalNonLus() }}
-              </span>
-            }
-          </a>
-        }
-      </nav>
-
-      <div class="px-3 py-4 border-t border-white/10">
-        <div class="flex items-center gap-3 px-3 py-2 mb-2">
-          <div
-            class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-xs font-bold"
-          >
-            {{ initiales() }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium truncate">
-              {{ auth.user()?.prenom }} {{ auth.user()?.nom }}
-            </p>
-            <p class="text-xs text-white/50 truncate">{{ auth.user()?.email }}</p>
-          </div>
-        </div>
-        <button
-          (click)="auth.logout()"
-          class="w-full text-left px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-        >
-          Deconnexion
-        </button>
-      </div>
-    </aside>
-  `,
+  templateUrl: './sidebar.component.html',
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   auth = inject(AuthService);
   messagerie = inject(MessagerieService);
+
+  ngOnInit() {
+    if (this.auth.getToken()) {
+      this.messagerie.connect();
+    }
+  }
+
+  deconnexion() {
+    this.messagerie.disconnect();
+    this.auth.logout();
+  }
 
   initiales = computed(() => {
     const u = this.auth.user();
@@ -90,6 +52,7 @@ export class SidebarComponent {
       ENSEIGNANT: [
         { label: 'Tableau de bord', path: '/enseignant/dashboard' },
         { label: 'Conventions', path: '/enseignant/conventions' },
+        { label: 'Messagerie', path: '/messagerie' },
       ],
       ADMIN: [
         { label: 'Tableau de bord', path: '/admin/dashboard' },

@@ -13,7 +13,7 @@ export interface UserSummary {
 
 @Injectable({ providedIn: "root" })
 export class UserService {
-  private api = "http://localhost:8082/api/admin/users";
+  private api = "/api/admin/users";
   constructor(private http: HttpClient) {}
 
   getAll() {

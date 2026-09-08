@@ -5,7 +5,7 @@ import { CandidatureResponse, StatutCandidature } from "../models/candidature.mo
 
 @Injectable({ providedIn: "root" })
 export class CandidatureService {
-  private api = "http://localhost:8082/api/candidatures";
+  private api = "/api/candidatures";
   constructor(private http: HttpClient) {}
 
   postuler(offreId: number, lettreMotivation: string, cv: File) {

@@ -6,5 +6,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface MessageRepository {
     Page<Message> findConversation(Long user1Id, Long user2Id, Pageable pageable);
-    long countByDestinatairIdAndLuFalse(Long destinataireId);
+    long countByDestinataireIdAndLuFalse(Long destinataireId);
 }

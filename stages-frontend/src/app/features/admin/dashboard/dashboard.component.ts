@@ -119,7 +119,7 @@ export class AdminDashboardComponent implements OnInit {
       this.stats.set(res.data);
     });
 
-    this.http.get<any>("http://localhost:8082/api/users/contacts").subscribe({
+    this.http.get<any>("/api/users/contacts").subscribe({
       next: res => {
         const users = res.data || [];
         this.totalUsers.set(users.length);

@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: stages_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-stages_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:?DB_PASS manquant, copiez .env.example vers .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5435}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: stages_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./stages-backend
+    container_name: stages_backend
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-stages_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASS:?DB_PASS manquant, copiez .env.example vers .env}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET manquant, copiez .env.example vers .env}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      STORAGE_PATH: /app/uploads
+      STORAGE_URL: http://localhost:${API_PORT:-8084}/files
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "${API_PORT:-8084}:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/v3/api-docs || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 5
+
+  frontend:
+    build: ./stages-frontend
+    container_name: stages_frontend
+    restart: unless-stopped
+    ports:
+      - "${ANGULAR_PORT:-4206}:80"
+    depends_on:
+      - backend
+
+  frontend-react:
+    build:
+      context: ./stages-frontend-react
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_WS_URL: ${VITE_WS_URL:-/ws}
+    container_name: stages_frontend_react
+    restart: unless-stopped
+    ports:
+      - "${REACT_PORT:-4207}:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  minio_data:
+  uploads_data:

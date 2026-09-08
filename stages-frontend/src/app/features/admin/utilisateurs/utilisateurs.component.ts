@@ -142,7 +142,7 @@ export class UtilisateursComponent implements OnInit {
   ngOnInit() { this.charger(); }
 
   charger() {
-    this.http.get<any>("http://localhost:8082/api/users/all").subscribe({
+    this.http.get<any>("/api/users/all").subscribe({
       next: res => {
         const users: Utilisateur[] = res.data || [];
         this.tous.set(users);
@@ -176,7 +176,7 @@ export class UtilisateursComponent implements OnInit {
   }
 
   toggleActif(u: Utilisateur) {
-    this.http.patch<any>(`http://localhost:8082/api/users/${u.id}/toggle-actif`, {}).subscribe({
+    this.http.patch<any>(`/api/users/${u.id}/toggle-actif`, {}).subscribe({
       next: res => {
         u.actif = !u.actif;
         this.tous.update(list => [...list]);

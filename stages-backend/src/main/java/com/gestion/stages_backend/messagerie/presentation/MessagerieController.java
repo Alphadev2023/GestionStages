@@ -16,6 +16,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
@@ -46,5 +48,18 @@ public class MessagerieController {
     @MessageMapping("/messages.envoyer")
     public void envoyerWs(@Payload MessageRequest request) {
         messagerieService.envoyer(request);
+    }
+
+    @GetMapping("/non-lus")
+    @Operation(summary = "Nombre de messages non lus par expediteur")
+    public ResponseEntity<ApiResponse<Map<Long, Long>>> nonLus() {
+        return ResponseEntity.ok(ApiResponse.ok(messagerieService.getNonLus()));
+    }
+
+    @PatchMapping("/lu/{autreUserId}")
+    @Operation(summary = "Marquer une conversation comme lue")
+    public ResponseEntity<ApiResponse<Void>> marquerLu(@PathVariable Long autreUserId) {
+        messagerieService.marquerLu(autreUserId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

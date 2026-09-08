@@ -5,7 +5,7 @@ import { ConventionResponse, StatutConvention } from "../models/convention.model
 
 @Injectable({ providedIn: "root" })
 export class ConventionService {
-  private api = "http://localhost:8082/api/conventions";
+  private api = "/api/conventions";
   constructor(private http: HttpClient) {}
 
   liste(statut?: StatutConvention, page = 0, size = 20) {

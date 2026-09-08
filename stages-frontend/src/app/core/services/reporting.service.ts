@@ -4,7 +4,7 @@ import { ApiResponse } from "../models/api.model";
 
 @Injectable({ providedIn: "root" })
 export class ReportingService {
-  private api = "http://localhost:8082/api/reporting";
+  private api = "/api/reporting";
   constructor(private http: HttpClient) {}
 
   getStatistiques() {
